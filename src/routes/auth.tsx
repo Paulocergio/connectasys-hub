@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Gauge, ShieldCheck } from "lucide-react";
+import { Gauge } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useConnecta } from "@/lib/connecta-store";
+import { Blob } from "@/components/landing/Blob";
 
 const searchSchema = z.object({ tab: z.enum(["login", "cadastro"]).optional() });
 
@@ -35,51 +36,43 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { tab } = Route.useSearch();
   const navigate = useNavigate();
-  const { login, cadastrar } = useConnecta();
+  const { login } = useConnecta();
   const [aba, setAba] = useState<"login" | "cadastro">(tab ?? "login");
   const [erro, setErro] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
 
-  function onLogin(e: React.FormEvent<HTMLFormElement>) {
+  async function onLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const r = login(String(f.get("email")), String(f.get("senha")));
+    setEnviando(true);
+    const r = await login(String(f.get("email")), String(f.get("senha")));
+    setEnviando(false);
     if (!r.ok) {
       setErro(r.erro ?? "Falha no login.");
       return;
     }
     setErro(null);
     toast.success("Bem-vindo de volta!");
-    navigate({ to: "/app/dashboard" });
-  }
-
-  function onCadastro(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const r = cadastrar({
-      nome: String(f.get("nome")),
-      email: String(f.get("email")),
-      senha: String(f.get("senha")),
-      oficina: String(f.get("oficina")),
-      telefone: String(f.get("telefone")),
-    });
-    if (!r.ok) {
-      setErro(r.erro ?? "Falha no cadastro.");
-      return;
-    }
-    setErro(null);
-    toast.success("Oficina cadastrada! Faça login para continuar.");
-    setAba("login");
+    navigate({ to: "/dashboard" });
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-5 py-14">
-      <div className="w-full max-w-md">
-        <Link to="/" className="flex items-center justify-center gap-2 text-lg font-semibold">
-          <Gauge className="h-6 w-6 text-primary" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-5 py-14">
+      <Blob className="pointer-events-none absolute -top-24 -left-32 h-96 w-96 text-accent/25" />
+      <Blob className="pointer-events-none absolute -right-24 -bottom-24 h-80 w-80 text-primary/20" />
+
+      <div className="relative w-full max-w-md">
+        <Link
+          to="/"
+          className="flex items-center justify-center gap-2.5 text-lg font-bold tracking-tight"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25">
+            <Gauge className="h-5 w-5 text-white" />
+          </span>
           Connecta<span className="text-primary">Sys</span>
         </Link>
 
-        <div className="mt-8 rounded-2xl border border-border/60 bg-card p-7">
+        <div className="mt-8 rounded-3xl border border-border/60 bg-card/80 p-7 shadow-2xl backdrop-blur-sm">
           <div className="mb-6 grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1">
             {(["login", "cadastro"] as const).map((t) => (
               <button
@@ -110,52 +103,36 @@ function AuthPage() {
             <form onSubmit={onLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
-                <Input id="email" name="email" type="email" required placeholder="voce@oficina.com" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="voce@oficina.com"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="senha">Senha</Label>
                 <Input id="senha" name="senha" type="password" required placeholder="••••••" />
               </div>
-              <Button type="submit" className="w-full">
-                Entrar no sistema
+              <Button
+                type="submit"
+                disabled={enviando}
+                className="w-full rounded-full font-bold shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] hover:shadow-primary/40"
+              >
+                {enviando ? "Entrando..." : "Entrar no sistema"}
               </Button>
-              <p className="flex items-start gap-2 text-xs text-muted-foreground">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                Demonstração: admin@connectasys.com / 123456. O usuário
-                marcos@oficinacentral.com existe, mas está sem autorização de acesso.
-              </p>
             </form>
           ) : (
-            <form onSubmit={onCadastro} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="nome">Seu nome</Label>
-                <Input id="nome" name="nome" required placeholder="Nome completo" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="oficina">Nome da oficina</Label>
-                <Input id="oficina" name="oficina" required placeholder="Auto Center Silva" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone</Label>
-                <Input id="telefone" name="telefone" required placeholder="(11) 90000-0000" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email-c">E-mail</Label>
-                <Input id="email-c" name="email" type="email" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="senha-c">Senha</Label>
-                <Input id="senha-c" name="senha" type="password" required minLength={6} />
-              </div>
-              <Button type="submit" className="w-full">
-                Criar minha oficina
-              </Button>
-            </form>
+            <p className="rounded-lg border border-border/60 bg-secondary/40 px-4 py-6 text-center text-sm text-muted-foreground">
+              Cadastro de novas oficinas estará disponível em breve. Peça ao administrador da sua
+              oficina pra criar seu acesso.
+            </p>
           )}
         </div>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">
+        <p className="mt-6 text-center text-sm font-medium text-muted-foreground">
+          <Link to="/" className="transition-colors hover:text-foreground">
             ← Voltar para a página inicial
           </Link>
         </p>
