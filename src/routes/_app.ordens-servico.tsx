@@ -126,6 +126,13 @@ function formatarData(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
+// Máscara simples: só dígitos, com no máximo uma vírgula decimal.
+function apenasNumero(valor: string) {
+  const limpo = valor.replace(/[^\d,]/g, "");
+  const [inteiro, ...resto] = limpo.split(",");
+  return resto.length ? `${inteiro},${resto.join("")}` : inteiro;
+}
+
 function OrdensServicoPage() {
   const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
@@ -637,7 +644,9 @@ function OrdensServicoPage() {
                   inputMode="decimal"
                   placeholder="0,00"
                   value={form.valorMaoDeObra}
-                  onChange={(e) => setForm({ ...form, valorMaoDeObra: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, valorMaoDeObra: apenasNumero(e.target.value) })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -647,7 +656,7 @@ function OrdensServicoPage() {
                   inputMode="decimal"
                   placeholder="0,00"
                   value={form.desconto}
-                  onChange={(e) => setForm({ ...form, desconto: e.target.value })}
+                  onChange={(e) => setForm({ ...form, desconto: apenasNumero(e.target.value) })}
                 />
               </div>
             </div>
@@ -742,14 +751,18 @@ function OrdensServicoPage() {
                   inputMode="decimal"
                   className="w-20"
                   value={itemForm.quantidade}
-                  onChange={(e) => setItemForm({ ...itemForm, quantidade: e.target.value })}
+                  onChange={(e) =>
+                    setItemForm({ ...itemForm, quantidade: apenasNumero(e.target.value) })
+                  }
                 />
                 <Input
                   placeholder="Valor un."
                   inputMode="decimal"
                   className="w-24"
                   value={itemForm.valorUnitario}
-                  onChange={(e) => setItemForm({ ...itemForm, valorUnitario: e.target.value })}
+                  onChange={(e) =>
+                    setItemForm({ ...itemForm, valorUnitario: apenasNumero(e.target.value) })
+                  }
                 />
                 <Button
                   type="button"
