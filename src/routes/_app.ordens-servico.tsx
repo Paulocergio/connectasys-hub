@@ -126,16 +126,29 @@ function formatarData(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
-// Máscara simples: só dígitos, com no máximo uma vírgula decimal.
+// Máscara simples (campo de quantidade): só dígitos, com no máximo uma vírgula decimal.
 function apenasNumero(valor: string) {
   const limpo = valor.replace(/[^\d,]/g, "");
-  const [inteiro, ...resto] = limpo.split(",");
+  const [inteiro = "", ...resto] = limpo.split(",");
   return resto.length ? `${inteiro},${resto.join("")}` : inteiro;
 }
 
-// Pro campo controlado: sempre com 2 casas decimais (ex.: 200 -> "200,00").
+// Formata um número como "1.234,56" (mesmo estilo do Total).
 function formatarNumero(valor: number) {
-  return valor.toFixed(2).replace(".", ",");
+  return valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Máscara de dinheiro (campos de valor): digita só números, os 2 últimos
+// dígitos viram centavos — igual caixa eletrônico. Sempre "0,00" pra cima.
+function mascaraMoeda(valorDigitado: string) {
+  const digitos = valorDigitado.replace(/\D/g, "");
+  const numero = Number(digitos || "0") / 100;
+  return formatarNumero(numero);
+}
+
+// Desfaz a formatação "1.234,56" pra virar 1234.56 (number).
+function paraNumero(valorFormatado: string) {
+  return Number(valorFormatado.replace(/\./g, "").replace(",", ".")) || 0;
 }
 
 function OrdensServicoPage() {
@@ -187,13 +200,11 @@ function OrdensServicoPage() {
   const valorTotalExibido =
     editando && osAtual
       ? osAtual.valorTotal
-      : Number(form.valorMaoDeObra.replace(",", ".") || 0) -
-        Number(form.desconto.replace(",", ".") || 0) +
+      : paraNumero(form.valorMaoDeObra) -
+        paraNumero(form.desconto) +
         itensNovos.reduce(
           (soma, item) =>
-            soma +
-            Number(item.quantidade.replace(",", ".") || 0) *
-              Number(item.valorUnitario.replace(",", ".") || 0),
+            soma + Number(item.quantidade.replace(",", ".") || 0) * paraNumero(item.valorUnitario),
           0,
         );
 
@@ -210,8 +221,8 @@ function OrdensServicoPage() {
       solucao: dados.solucao || null,
       previsaoTermino: dados.previsaoTermino || null,
       dataConclusao: dados.dataConclusao || null,
-      valorMaoDeObra: Number(dados.valorMaoDeObra.replace(",", ".") || 0),
-      desconto: Number(dados.desconto.replace(",", ".") || 0),
+      valorMaoDeObra: paraNumero(dados.valorMaoDeObra),
+      desconto: paraNumero(dados.desconto),
       aprovacaoClienteNome: dados.aprovacaoClienteNome || null,
       aprovacaoClienteEm: dados.aprovacaoClienteEm || null,
     };
@@ -226,8 +237,8 @@ function OrdensServicoPage() {
           veiculoId: Number(dados.veiculoId),
           descricaoProblema: dados.descricaoProblema,
           previsaoTermino: dados.previsaoTermino || null,
-          valorMaoDeObra: Number(dados.valorMaoDeObra.replace(",", ".") || 0),
-          desconto: Number(dados.desconto.replace(",", ".") || 0),
+          valorMaoDeObra: paraNumero(dados.valorMaoDeObra),
+          desconto: paraNumero(dados.desconto),
         }),
       });
 
@@ -246,7 +257,7 @@ function OrdensServicoPage() {
             ordemServicoId: criada.id,
             descricao: item.descricao,
             quantidade: Number(item.quantidade.replace(",", ".")),
-            valorUnitario: Number(item.valorUnitario.replace(",", ".")),
+            valorUnitario: paraNumero(item.valorUnitario),
           }),
         });
       }
@@ -294,7 +305,7 @@ function OrdensServicoPage() {
           ordemServicoId,
           descricao: dados.descricao,
           quantidade: Number(dados.quantidade.replace(",", ".")),
-          valorUnitario: Number(dados.valorUnitario.replace(",", ".")),
+          valorUnitario: paraNumero(dados.valorUnitario),
         }),
       }),
     onSuccess: () => {
@@ -650,7 +661,7 @@ function OrdensServicoPage() {
                   placeholder="0,00"
                   value={form.valorMaoDeObra}
                   onChange={(e) =>
-                    setForm({ ...form, valorMaoDeObra: apenasNumero(e.target.value) })
+                    setForm({ ...form, valorMaoDeObra: mascaraMoeda(e.target.value) })
                   }
                 />
               </div>
@@ -661,7 +672,7 @@ function OrdensServicoPage() {
                   inputMode="decimal"
                   placeholder="0,00"
                   value={form.desconto}
-                  onChange={(e) => setForm({ ...form, desconto: apenasNumero(e.target.value) })}
+                  onChange={(e) => setForm({ ...form, desconto: mascaraMoeda(e.target.value) })}
                 />
               </div>
             </div>
@@ -729,7 +740,7 @@ function OrdensServicoPage() {
                         >
                           <span>
                             {item.descricao} — {item.quantidade} ×{" "}
-                            {formatarMoeda(Number(item.valorUnitario))}
+                            {formatarMoeda(paraNumero(item.valorUnitario))}
                           </span>
                           <Button
                             type="button"
@@ -766,7 +777,7 @@ function OrdensServicoPage() {
                   className="w-24"
                   value={itemForm.valorUnitario}
                   onChange={(e) =>
-                    setItemForm({ ...itemForm, valorUnitario: apenasNumero(e.target.value) })
+                    setItemForm({ ...itemForm, valorUnitario: mascaraMoeda(e.target.value) })
                   }
                 />
                 <Button
