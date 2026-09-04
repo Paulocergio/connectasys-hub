@@ -8,6 +8,7 @@ import {
   HandCoins,
   Contact,
   Car,
+  Wrench,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -41,6 +42,7 @@ const itens = [
   { to: "/contas-a-receber", label: "Contas a Receber", icon: HandCoins },
   { to: "/clientes", label: "Clientes", icon: Contact },
   { to: "/veiculos", label: "Veículos", icon: Car },
+  { to: "/ordens-servico", label: "Ordens de Serviço", icon: Wrench },
   { to: "/usuarios", label: "Usuários", icon: Users },
 ] as const;
 
