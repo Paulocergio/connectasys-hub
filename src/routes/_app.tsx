@@ -6,6 +6,8 @@ import {
   Users,
   Wallet,
   HandCoins,
+  Contact,
+  Car,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -37,6 +39,8 @@ const itens = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/contas-a-pagar", label: "Contas a Pagar", icon: Wallet },
   { to: "/contas-a-receber", label: "Contas a Receber", icon: HandCoins },
+  { to: "/clientes", label: "Clientes", icon: Contact },
+  { to: "/veiculos", label: "Veículos", icon: Car },
   { to: "/usuarios", label: "Usuários", icon: Users },
 ] as const;
 
