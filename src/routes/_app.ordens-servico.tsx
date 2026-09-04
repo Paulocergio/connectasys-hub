@@ -133,6 +133,11 @@ function apenasNumero(valor: string) {
   return resto.length ? `${inteiro},${resto.join("")}` : inteiro;
 }
 
+// Pro campo controlado: sempre com 2 casas decimais (ex.: 200 -> "200,00").
+function formatarNumero(valor: number) {
+  return valor.toFixed(2).replace(".", ",");
+}
+
 function OrdensServicoPage() {
   const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
@@ -343,8 +348,8 @@ function OrdensServicoPage() {
       solucao: o.solucao ?? "",
       previsaoTermino: o.previsaoTermino ? o.previsaoTermino.slice(0, 10) : "",
       dataConclusao: o.dataConclusao ? o.dataConclusao.slice(0, 10) : "",
-      valorMaoDeObra: String(o.valorMaoDeObra),
-      desconto: String(o.desconto),
+      valorMaoDeObra: formatarNumero(o.valorMaoDeObra),
+      desconto: formatarNumero(o.desconto),
       aprovacaoClienteNome: o.aprovacaoClienteNome ?? "",
       aprovacaoClienteEm: o.aprovacaoClienteEm ? o.aprovacaoClienteEm.slice(0, 10) : "",
     });
