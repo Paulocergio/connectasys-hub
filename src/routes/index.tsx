@@ -451,11 +451,10 @@ function Landing() {
                 return (
                   <div
                     key={p.nome}
-                    className={`relative flex flex-col rounded-3xl border p-8 transition-all duration-300 ${
-                      p.destaque
+                    className={`relative flex flex-col rounded-3xl border p-8 transition-all duration-300 ${p.destaque
                         ? "border-primary/40 bg-gradient-to-b from-primary/10 via-card to-card shadow-2xl shadow-primary/15 lg:-translate-y-4 lg:scale-105"
                         : "border-border/60 bg-card/80 shadow-lg backdrop-blur-sm hover:-translate-y-2 hover:shadow-xl"
-                    }`}
+                      }`}
                   >
                     {p.destaque && (
                       <span className="absolute -top-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-white shadow-lg shadow-primary/30">
@@ -465,11 +464,10 @@ function Landing() {
                     )}
 
                     <span
-                      className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl ${
-                        p.destaque
+                      className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl ${p.destaque
                           ? "bg-primary text-white shadow-lg shadow-primary/25"
                           : `${c.bg} ${c.text}`
-                      }`}
+                        }`}
                     >
                       <p.icon className="h-7 w-7" />
                     </span>
@@ -503,11 +501,10 @@ function Landing() {
 
                     <Button
                       asChild
-                      className={`mt-8 rounded-full font-bold transition-all duration-300 ${
-                        p.destaque
+                      className={`mt-8 rounded-full font-bold transition-all duration-300 ${p.destaque
                           ? "shadow-lg shadow-primary/25 hover:scale-105 hover:shadow-primary/40"
                           : "border-2 hover:border-primary/30 hover:bg-primary/5"
-                      }`}
+                        }`}
                       variant={p.destaque ? "default" : "outline"}
                     >
                       <Link to="/auth" search={{ tab: "cadastro" }}>
@@ -534,9 +531,8 @@ function Landing() {
             {faqData.map((item, idx) => (
               <div
                 key={idx}
-                className={`overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm transition-all duration-300 ${
-                  openFaq === idx ? "shadow-lg" : "shadow-sm hover:shadow-md"
-                }`}
+                className={`overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm transition-all duration-300 ${openFaq === idx ? "shadow-lg" : "shadow-sm hover:shadow-md"
+                  }`}
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
@@ -548,9 +544,8 @@ function Landing() {
                   />
                 </button>
                 <div
-                  className={`overflow-hidden transition-all duration-300 ${
-                    openFaq === idx ? "max-h-40" : "max-h-0"
-                  }`}
+                  className={`overflow-hidden transition-all duration-300 ${openFaq === idx ? "max-h-40" : "max-h-0"
+                    }`}
                 >
                   <p className="px-6 pb-6 leading-relaxed text-muted-foreground">{item.a}</p>
                 </div>
@@ -591,12 +586,50 @@ function Landing() {
         </section>
       </main>
 
-      <footer className="border-t border-border/60 bg-gradient-to-b from-transparent to-primary/[0.03] px-5 py-10 text-sm text-muted-foreground">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
-          <span className="font-medium">© 2026 ConnectaSys — Gestão para oficinas mecânicas</span>
-          <Link to="/auth" className="font-medium transition-colors hover:text-foreground">
-            Acessar sistema →
-          </Link>
+      <footer className="border-t border-border/40 bg-gradient-to-b from-transparent to-foreground/[0.02] px-6 py-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col items-start justify-between gap-10 md:flex-row md:items-center">
+            <div>
+              <Link to="/" className="flex items-center gap-2.5 text-lg font-bold tracking-tight">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/25">
+                  <Gauge className="h-4 w-4 text-white" />
+                </span>
+                <span>
+                  Connecta<span className="text-primary">Sys</span>
+                </span>
+              </Link>
+              <p className="mt-3 max-w-sm text-sm text-muted-foreground">
+                Gestão completa para oficinas mecânicas. Feito para quem vive o dia a dia da oficina.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-6 text-sm">
+              <a href="#recursos" className="text-muted-foreground transition-colors hover:text-foreground">
+                Recursos
+              </a>
+              <a href="#planos" className="text-muted-foreground transition-colors hover:text-foreground">
+                Planos
+              </a>
+              <a href="#faq" className="text-muted-foreground transition-colors hover:text-foreground">
+                Perguntas
+              </a>
+              <Link
+                to="/auth"
+                className="inline-flex items-center gap-1.5 font-semibold text-foreground transition-colors hover:text-primary"
+              >
+                Acessar sistema
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-border/40 pt-8 text-xs text-muted-foreground sm:flex-row">
+            <span>© 2026 ConnectaSys — Gestão para oficinas mecânicas</span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
+              Todos os sistemas operacionais
+            </span>
+          </div>
         </div>
       </footer>
     </div>
