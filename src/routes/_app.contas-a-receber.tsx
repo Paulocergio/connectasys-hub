@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Search, HandCoins } from "lucide-react";
@@ -52,6 +52,7 @@ type ContaReceberApi = {
   formaPagamento: (typeof FORMAS_PAGAMENTO)[number] | null;
   status: "Pendente" | "Paga" | "Atrasada";
   dataCadastro: string;
+  ordemServicoId: number | null;
 };
 
 type ClienteApi = {
@@ -282,7 +283,18 @@ function ContasAReceberPage() {
               lista.map((c) => (
                 <tr key={c.id}>
                   <td className="px-5 py-3 font-medium">{nomeCliente(c.clienteId)}</td>
-                  <td className="px-5 py-3 text-muted-foreground">{c.descricao}</td>
+                  <td className="px-5 py-3 text-muted-foreground">
+                    <div>{c.descricao}</div>
+                    {c.ordemServicoId !== null && (
+                      <Link
+                        to="/ordens-servico"
+                        search={{ os: c.ordemServicoId }}
+                        className="text-xs text-primary underline-offset-2 hover:underline"
+                      >
+                        OS #{c.ordemServicoId}
+                      </Link>
+                    )}
+                  </td>
                   <td className="px-5 py-3 text-muted-foreground">{formatarMoeda(c.valor)}</td>
                   <td className="px-5 py-3 text-muted-foreground">
                     {formatarData(c.dataVencimento)}
@@ -323,7 +335,9 @@ function ContasAReceberPage() {
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
                 <HandCoins className="h-5 w-5" />
               </span>
-              <DialogTitle>{editando ? "Editar conta" : "Nova conta"}</DialogTitle>
+              <DialogTitle>
+                {editando ? "Editar Conta a Receber" : "Nova Conta a Receber"}
+              </DialogTitle>
             </div>
             <DialogDescription>
               {editando
@@ -331,6 +345,19 @@ function ContasAReceberPage() {
                 : "Preencha os dados da nova conta a receber."}
             </DialogDescription>
           </DialogHeader>
+          {editando?.ordemServicoId != null && (
+            <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+              Gerada automaticamente pela conclusão da{" "}
+              <Link
+                to="/ordens-servico"
+                search={{ os: editando.ordemServicoId }}
+                className="font-medium text-primary underline-offset-2 hover:underline"
+              >
+                OS #{editando.ordemServicoId}
+              </Link>
+              .
+            </p>
+          )}
           <form onSubmit={salvar} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="cr-cliente">Cliente</Label>

@@ -498,7 +498,6 @@ function Landing() {
                         ))}
                       </ul>
                     </div>
-
                     <Button
                       asChild
                       className={`mt-8 rounded-full font-bold transition-all duration-300 ${p.destaque

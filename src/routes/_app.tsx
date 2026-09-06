@@ -9,6 +9,7 @@ import {
   Contact,
   Car,
   Wrench,
+  Package,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -43,6 +44,7 @@ const itens = [
   { to: "/clientes", label: "Clientes", icon: Contact },
   { to: "/veiculos", label: "Veículos", icon: Car },
   { to: "/ordens-servico", label: "Ordens de Serviço", icon: Wrench },
+  { to: "/estoque", label: "Estoque", icon: Package },
   { to: "/usuarios", label: "Usuários", icon: Users },
 ] as const;
 

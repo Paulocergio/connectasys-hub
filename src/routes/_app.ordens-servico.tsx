@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Search, Wrench } from "lucide-react";
 import { toast } from "sonner";
@@ -46,8 +47,11 @@ const STATUS_LISTA: StatusOrdemServico[] = [
   "Cancelado",
 ];
 
+const searchSchema = z.object({ os: z.coerce.number().optional() });
+
 export const Route = createFileRoute("/_app/ordens-servico")({
   ssr: false,
+  validateSearch: searchSchema,
   component: OrdensServicoPage,
 });
 
@@ -57,6 +61,7 @@ type ItemOrdemServicoApi = {
   descricao: string;
   quantidade: number;
   valorUnitario: number;
+  estoqueId: number | null;
 };
 
 type OrdemServicoApi = {
@@ -115,8 +120,15 @@ const vazio: Form = {
   aprovacaoClienteEm: "",
 };
 
-type ItemForm = { descricao: string; quantidade: string; valorUnitario: string };
-const itemVazio: ItemForm = { descricao: "", quantidade: "", valorUnitario: "" };
+type ItemForm = {
+  descricao: string;
+  quantidade: string;
+  valorUnitario: string;
+  estoqueId: string;
+};
+const itemVazio: ItemForm = { descricao: "", quantidade: "", valorUnitario: "", estoqueId: "" };
+
+type EstoqueApi = { id: number; nome: string; quantidade: number; precoVenda: number };
 
 function formatarMoeda(valor: number) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -152,6 +164,8 @@ function paraNumero(valorFormatado: string) {
 }
 
 function OrdensServicoPage() {
+  const { os: osParam } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState(false);
@@ -170,6 +184,16 @@ function OrdensServicoPage() {
     queryFn: () => apiFetch<OrdemServicoApi[]>("/api/OrdensServico"),
   });
 
+  useEffect(() => {
+    if (!osParam) return;
+    const os = ordens.find((o) => o.id === osParam);
+    if (os) {
+      abrirEdicao(os);
+      navigate({ search: {}, replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [osParam, ordens]);
+
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes"],
     queryFn: () => apiFetch<ClienteApi[]>("/api/Clientes"),
@@ -184,6 +208,11 @@ function OrdensServicoPage() {
     queryKey: ["usuarios"],
     queryFn: () => apiFetch<UsuarioApi[]>("/api/Usuarios"),
     retry: false,
+  });
+
+  const { data: estoque = [] } = useQuery({
+    queryKey: ["estoque"],
+    queryFn: () => apiFetch<EstoqueApi[]>("/api/Estoque"),
   });
 
   const nomeCliente = (clienteId: number) => clientes.find((c) => c.id === clienteId)?.nome ?? "—";
@@ -258,6 +287,7 @@ function OrdensServicoPage() {
             descricao: item.descricao,
             quantidade: Number(item.quantidade.replace(",", ".")),
             valorUnitario: paraNumero(item.valorUnitario),
+            estoqueId: item.estoqueId ? Number(item.estoqueId) : null,
           }),
         });
       }
@@ -266,6 +296,7 @@ function OrdensServicoPage() {
     },
     onSuccess: () => {
       invalidar();
+      queryClient.invalidateQueries({ queryKey: ["estoque"] });
       setAberto(false);
       setItensNovos([]);
       toast.success("Ordem de serviço criada.");
@@ -281,6 +312,8 @@ function OrdensServicoPage() {
       }),
     onSuccess: () => {
       invalidar();
+      queryClient.invalidateQueries({ queryKey: ["contas-a-receber"] });
+      setAberto(false);
       toast.success("Ordem de serviço atualizada.");
     },
     onError: (erro: Error) => toast.error(erro.message),
@@ -290,6 +323,8 @@ function OrdensServicoPage() {
     mutationFn: (id: number) => apiFetch(`/api/OrdensServico/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       invalidar();
+      queryClient.invalidateQueries({ queryKey: ["contas-a-receber"] });
+      queryClient.invalidateQueries({ queryKey: ["estoque"] });
       setExcluir(null);
       setAberto(false);
       toast.success("Ordem de serviço removida.");
@@ -306,10 +341,13 @@ function OrdensServicoPage() {
           descricao: dados.descricao,
           quantidade: Number(dados.quantidade.replace(",", ".")),
           valorUnitario: paraNumero(dados.valorUnitario),
+          estoqueId: dados.estoqueId ? Number(dados.estoqueId) : null,
         }),
       }),
     onSuccess: () => {
       invalidar();
+      queryClient.invalidateQueries({ queryKey: ["contas-a-receber"] });
+      queryClient.invalidateQueries({ queryKey: ["estoque"] });
       setItemForm(itemVazio);
       toast.success("Item adicionado.");
     },
@@ -321,6 +359,8 @@ function OrdensServicoPage() {
       apiFetch(`/api/OrdensServico/itens/${itemId}`, { method: "DELETE" }),
     onSuccess: () => {
       invalidar();
+      queryClient.invalidateQueries({ queryKey: ["contas-a-receber"] });
+      queryClient.invalidateQueries({ queryKey: ["estoque"] });
       toast.success("Item removido.");
     },
     onError: (erro: Error) => toast.error(erro.message),
@@ -697,6 +737,13 @@ function OrdensServicoPage() {
               </div>
             </div>
 
+            {editando && osAtual && osAtual.status === "Concluído" && (
+              <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+                OS concluída — se ainda não existir, uma conta a receber pendente é gerada
+                automaticamente com o valor total (ver Contas a Receber).
+              </p>
+            )}
+
             <div className="space-y-3 rounded-xl border border-border/60 p-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">Peças e materiais</h3>
@@ -755,6 +802,30 @@ function OrdensServicoPage() {
                       ))}
                     </div>
                   )}
+
+              <Select
+                value={itemForm.estoqueId}
+                onValueChange={(v) => {
+                  const peca = estoque.find((e) => String(e.id) === v);
+                  setItemForm({
+                    ...itemForm,
+                    estoqueId: v,
+                    descricao: peca?.nome ?? itemForm.descricao,
+                    valorUnitario: peca ? formatarNumero(peca.precoVenda) : itemForm.valorUnitario,
+                  });
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-64">
+                  <SelectValue placeholder="Peça do estoque (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {estoque.map((e) => (
+                    <SelectItem key={e.id} value={String(e.id)}>
+                      {e.nome} ({e.quantidade} disponíveis)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto_auto]">
                 <Input

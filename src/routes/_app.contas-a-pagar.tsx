@@ -290,7 +290,9 @@ function ContasAPagarPage() {
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
                 <Wallet className="h-5 w-5" />
               </span>
-              <DialogTitle>{editando ? "Editar conta" : "Nova conta"}</DialogTitle>
+              <DialogTitle>
+                {editando ? "Editar Conta a Pagar" : "Nova Conta a Pagar"}
+              </DialogTitle>
             </div>
             <DialogDescription>
               {editando
