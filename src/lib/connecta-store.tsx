@@ -8,8 +8,9 @@ import {
   type ReactNode,
 } from "react";
 import { apiFetch, clearSessao, setToken, SESSION_KEY } from "@/lib/api";
+import type { Tema } from "@/lib/tema";
 
-export type Sessao = { id: string; nome: string; email: string; papel: string };
+export type Sessao = { id: string; nome: string; email: string; papel: string; tema: Tema };
 
 type LoginResponse = {
   token: string;
@@ -17,6 +18,7 @@ type LoginResponse = {
   usuarioId: string;
   nome: string;
   role: string;
+  tema: string;
 };
 
 export function getSessao(): Sessao | null {
@@ -55,6 +57,7 @@ export function ConnectaProvider({ children }: { children: ReactNode }) {
         nome: resposta.nome,
         email,
         papel: resposta.role,
+        tema: resposta.tema === "dark" ? "dark" : "light",
       };
       setToken(resposta.token);
       window.localStorage.setItem(SESSION_KEY, JSON.stringify(s));

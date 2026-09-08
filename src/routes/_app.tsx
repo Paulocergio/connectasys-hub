@@ -15,7 +15,7 @@ import {
   LogOut,
   Sun,
   Moon,
-} from "lucide-react";
+} from "@/components/icons";
 import { getSessao, useConnecta } from "@/lib/connecta-store";
 import { useTema } from "@/lib/tema";
 import { getInitials } from "@/lib/initials";
@@ -51,7 +51,7 @@ const itens = [
 function AppLayout() {
   const [aberta, setAberta] = useState(true);
   const { sessao, logout } = useConnecta();
-  const { tema, setTema } = useTema();
+  const { tema, setTema } = useTema(sessao);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -64,7 +64,7 @@ function AppLayout() {
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       <aside
-        className={`sticky top-0 flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 ${
+        className={`sticky top-0 flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 print:hidden ${
           aberta ? "w-64" : "w-[72px]"
         }`}
       >
