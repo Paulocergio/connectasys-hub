@@ -14,7 +14,7 @@ import {
   ChevronDown,
   Sparkles,
   Zap,
-} from "lucide-react";
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Blob } from "@/components/landing/Blob";
 import { OficinaIllustration } from "@/components/landing/OficinaIllustration";

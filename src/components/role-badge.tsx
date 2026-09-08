@@ -1,4 +1,4 @@
-import { Shield, Wrench, Headset, Banknote, User } from "lucide-react";
+import { Shield, Wrench, Headset, Banknote, User } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 const CONFIG: Record<string, { icon: typeof User; bg: string; fg: string }> = {

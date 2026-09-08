@@ -1,4 +1,4 @@
-import { Gauge, CalendarClock, Wrench, Package, Receipt } from "lucide-react";
+import { Gauge, CalendarClock, Wrench, Package, Receipt } from "@/components/icons";
 
 const navIcons = [Gauge, CalendarClock, Wrench, Package, Receipt];
 

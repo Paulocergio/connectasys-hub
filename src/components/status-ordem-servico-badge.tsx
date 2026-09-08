@@ -1,4 +1,4 @@
-import { CircleDot, Loader2, PackageSearch, CheckCircle2, XCircle } from "lucide-react";
+import { CircleDot, Loader2, PackageSearch, CheckCircle2, XCircle } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 export type StatusOrdemServico =

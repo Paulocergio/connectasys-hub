@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { CheckCircle2, Clock, AlertCircle } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 export type StatusFinanceiro = "Pendente" | "Paga" | "Atrasada";

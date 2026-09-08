@@ -1,4 +1,4 @@
-import { CreditCard, Zap, Barcode, Banknote, Minus } from "lucide-react";
+import { CreditCard, Zap, Barcode, Banknote, Minus } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 const CONFIG: Record<string, { icon: typeof Banknote; bg: string; fg: string }> = {
