@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Search, Car } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Car } from "@/components/icons";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,9 @@ export const Route = createFileRoute("/_app/veiculos")({
   component: VeiculosPage,
 });
 
+const TIPOS_VEICULO = ["Carro", "Moto", "Caminhão", "Outros"] as const;
+type TipoVeiculo = (typeof TIPOS_VEICULO)[number];
+
 type VeiculoApi = {
   id: number;
   clienteId: number;
@@ -46,6 +49,7 @@ type VeiculoApi = {
   modelo: string;
   ano: number;
   cor: string;
+  tipo: TipoVeiculo;
   dataCadastro: string;
 };
 
@@ -64,6 +68,7 @@ type Form = {
   modelo: string;
   ano: string;
   cor: string;
+  tipo: TipoVeiculo;
 };
 
 const vazio: Form = {
@@ -73,6 +78,7 @@ const vazio: Form = {
   modelo: "",
   ano: "",
   cor: "",
+  tipo: "Carro",
 };
 
 // Placa antiga (AAA9999) ou Mercosul (AAA9A99), sempre em maiúsculo.
@@ -115,6 +121,7 @@ function VeiculosPage() {
           modelo: dados.modelo,
           ano: Number(dados.ano),
           cor: dados.cor,
+          tipo: dados.tipo,
         }),
       }),
     onSuccess: () => {
@@ -137,6 +144,7 @@ function VeiculosPage() {
           modelo: dados.modelo,
           ano: Number(dados.ano),
           cor: dados.cor,
+          tipo: dados.tipo,
         }),
       }),
     onSuccess: () => {
@@ -164,7 +172,8 @@ function VeiculosPage() {
       (v) =>
         v.placa.toLowerCase().includes(q) ||
         v.marca.toLowerCase().includes(q) ||
-        v.modelo.toLowerCase().includes(q),
+        v.modelo.toLowerCase().includes(q) ||
+        v.tipo.toLowerCase().includes(q),
     );
   }, [veiculos, busca]);
 
@@ -183,6 +192,7 @@ function VeiculosPage() {
       modelo: v.modelo,
       ano: String(v.ano),
       cor: v.cor,
+      tipo: v.tipo,
     });
     setAberto(true);
   }
@@ -235,6 +245,7 @@ function VeiculosPage() {
           <thead className="border-b border-border/60 text-left text-xs uppercase text-muted-foreground">
             <tr>
               <th className="px-5 py-3 font-medium">Placa</th>
+              <th className="px-5 py-3 font-medium">Tipo</th>
               <th className="px-5 py-3 font-medium">Marca</th>
               <th className="px-5 py-3 font-medium">Modelo</th>
               <th className="px-5 py-3 font-medium">Ano</th>
@@ -246,14 +257,14 @@ function VeiculosPage() {
           <tbody className="divide-y divide-border/60">
             {isLoading && (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-muted-foreground">
+                <td colSpan={8} className="px-5 py-10 text-center text-muted-foreground">
                   Carregando veículos...
                 </td>
               </tr>
             )}
             {isError && (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-destructive">
+                <td colSpan={8} className="px-5 py-10 text-center text-destructive">
                   Não foi possível carregar os veículos. Confira se a API está no ar.
                 </td>
               </tr>
@@ -263,6 +274,7 @@ function VeiculosPage() {
               lista.map((v) => (
                 <tr key={v.id}>
                   <td className="px-5 py-3 font-medium">{v.placa.toUpperCase()}</td>
+                  <td className="px-5 py-3 text-muted-foreground">{v.tipo}</td>
                   <td className="px-5 py-3 text-muted-foreground">{v.marca}</td>
                   <td className="px-5 py-3 text-muted-foreground">{v.modelo}</td>
                   <td className="px-5 py-3 text-muted-foreground">{v.ano}</td>
@@ -282,7 +294,7 @@ function VeiculosPage() {
               ))}
             {!isLoading && !isError && lista.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-muted-foreground">
+                <td colSpan={8} className="px-5 py-10 text-center text-muted-foreground">
                   Nenhum veículo encontrado.
                 </td>
               </tr>
@@ -382,6 +394,24 @@ function VeiculosPage() {
                   value={form.ano}
                   onChange={(e) => setForm({ ...form, ano: e.target.value })}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="v-tipo">Tipo</Label>
+                <Select
+                  value={form.tipo}
+                  onValueChange={(v) => setForm({ ...form, tipo: v as TipoVeiculo })}
+                >
+                  <SelectTrigger id="v-tipo">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIPOS_VEICULO.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>
