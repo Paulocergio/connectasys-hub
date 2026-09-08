@@ -1,13 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Wrench, Users, Package, Receipt } from "lucide-react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Wrench, Users, Package, Receipt } from "@/components/icons";
 import { useConnecta } from "@/lib/connecta-store";
 import { getInitials } from "@/lib/initials";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/dashboard")({
   ssr: false,
   component: Dashboard,
 });
+
+type ClienteApi = { id: number };
+type EstoqueApi = { id: number; quantidade: number; estoqueMinimo: number };
+type ContaReceberApi = { valor: number; dataRecebimento: string | null };
+type OrdemServicoApi = {
+  status: "Aberto" | "Em Andamento" | "Aguardando Peça" | "Concluído" | "Cancelado";
+  previsaoTermino: string | null;
+};
 
 const corMap: Record<string, string> = {
   primary: "bg-primary",
@@ -16,17 +27,85 @@ const corMap: Record<string, string> = {
   chart5: "bg-chart-5",
 };
 
-const cards = [
-  { icon: Wrench, label: "OS em aberto", valor: "0", cor: "primary" },
-  { icon: Users, label: "Clientes ativos", valor: "0", cor: "chart4" },
-  { icon: Package, label: "Peças em estoque baixo", valor: "0", cor: "chart5" },
-  { icon: Receipt, label: "Faturamento do mês", valor: "R$ 0,00", cor: "chart3" },
-] as const;
-
 const agenda: { hora: string; servico: string; mecanico: string }[] = [];
+
+function formatarMoeda(valor: number) {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+// Mesmo critério da tela de Estoque: quantidade no ou abaixo do mínimo cadastrado.
+function estoqueBaixo(e: EstoqueApi) {
+  return e.quantidade <= e.estoqueMinimo;
+}
 
 function Dashboard() {
   const { sessao } = useConnecta();
+
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["clientes"],
+    queryFn: () => apiFetch<ClienteApi[]>("/api/Clientes"),
+  });
+
+  const { data: estoque = [] } = useQuery({
+    queryKey: ["estoque"],
+    queryFn: () => apiFetch<EstoqueApi[]>("/api/Estoque"),
+  });
+
+  const { data: contasReceber = [] } = useQuery({
+    queryKey: ["contas-a-receber"],
+    queryFn: () => apiFetch<ContaReceberApi[]>("/api/ContasReceber"),
+  });
+
+  const { data: ordens = [] } = useQuery({
+    queryKey: ["ordens-servico"],
+    queryFn: () => apiFetch<OrdemServicoApi[]>("/api/OrdensServico"),
+  });
+
+  // "Hoje" no calendário local do usuário — não usar toISOString() aqui, que
+  // converte pra UTC e adianta a data em fusos negativos (ex: Brasil, UTC-3),
+  // fazendo uma OS com prazo pra hoje aparecer como atrasada mais cedo.
+  const agora = new Date();
+  const doisDigitos = (n: number) => String(n).padStart(2, "0");
+  const mesAtual = `${agora.getFullYear()}-${doisDigitos(agora.getMonth() + 1)}`;
+  const hoje = `${mesAtual}-${doisDigitos(agora.getDate())}`;
+
+  const faturamentoMes = useMemo(
+    () =>
+      contasReceber
+        .filter((c) => c.dataRecebimento?.slice(0, 7) === mesAtual)
+        .reduce((soma, c) => soma + c.valor, 0),
+    [contasReceber, mesAtual],
+  );
+
+  const estoqueBaixoCount = useMemo(() => estoque.filter(estoqueBaixo).length, [estoque]);
+
+  const { osAbertas, osAtrasadas } = useMemo(() => {
+    let abertas = 0;
+    let atrasadas = 0;
+    for (const o of ordens) {
+      if (o.status === "Concluído" || o.status === "Cancelado") continue;
+      abertas++;
+      if (o.previsaoTermino && o.previsaoTermino.slice(0, 10) < hoje) atrasadas++;
+    }
+    return { osAbertas: abertas, osAtrasadas: atrasadas };
+  }, [ordens, hoje]);
+
+  const cards = [
+    { icon: Users, label: "Clientes ativos", valor: String(clientes.length), cor: "chart4" },
+    {
+      icon: Package,
+      label: "Peças em estoque baixo",
+      valor: String(estoqueBaixoCount),
+      cor: "chart5",
+    },
+    {
+      icon: Receipt,
+      label: "Faturamento do mês",
+      valor: formatarMoeda(faturamentoMes),
+      cor: "chart3",
+    },
+  ] as const;
+
   return (
     <div className="space-y-8">
       <div>
@@ -35,6 +114,23 @@ function Dashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl bg-card p-5 shadow-sm">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white">
+            <Wrench className="h-5 w-5" />
+          </span>
+          <div className="mt-4 flex items-end gap-5">
+            <div>
+              <p className="text-3xl font-bold">{osAbertas}</p>
+              <p className="text-xs font-medium text-muted-foreground">Abertas</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-destructive">{osAtrasadas}</p>
+              <p className="text-xs font-medium text-muted-foreground">Atrasadas</p>
+            </div>
+          </div>
+          <p className="mt-2 text-xs font-medium text-muted-foreground">OS em aberto</p>
+        </div>
+
         {cards.map(({ icon: Icon, label, valor, cor }) => (
           <div key={label} className="rounded-2xl bg-card p-5 shadow-sm">
             <span
