@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Search, UserCog } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, UserCog } from "@/components/icons";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,6 +74,7 @@ const vazio: Form = { nome: "", email: "", senha: "", telefone: "", role: PAPEIS
 
 function UsuariosPage() {
   const { sessao } = useConnecta();
+  const souAdmin = sessao?.papel === "Admin";
   const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState(false);
@@ -166,9 +167,11 @@ function UsuariosPage() {
           <h1 className="text-2xl font-bold tracking-tight">Usuários</h1>
           <p className="text-sm text-muted-foreground">Gerencie a equipe da oficina.</p>
         </div>
-        <Button onClick={abrirNovo}>
-          <Plus className="mr-2 h-4 w-4" /> Novo usuário
-        </Button>
+        {souAdmin && (
+          <Button onClick={abrirNovo}>
+            <Plus className="mr-2 h-4 w-4" /> Novo usuário
+          </Button>
+        )}
       </div>
 
       <div className="relative max-w-sm">
@@ -219,17 +222,21 @@ function UsuariosPage() {
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => abrirEdicao(u)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={u.id === sessao?.id}
-                        onClick={() => setExcluir(u)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      {souAdmin && (
+                        <>
+                          <Button variant="ghost" size="icon" onClick={() => abrirEdicao(u)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={u.id === sessao?.id}
+                            onClick={() => setExcluir(u)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
