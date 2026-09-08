@@ -194,3 +194,35 @@
 .animate-marquee {
   animation: marquee 28s linear infinite;
 }
+
+/*
+ * Impressão: sempre em tons claros, independente do tema ativo na tela
+ * (mesmos valores do tema claro em .light), pra ficar legível em papel.
+ */
+@media print {
+  :root {
+    --background: oklch(0.984 0.003 247.9);
+    --foreground: oklch(0.22 0.02 240);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.22 0.02 240);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.22 0.02 240);
+    --primary: oklch(0.5 0.19 237);
+    --primary-foreground: oklch(0.99 0.002 237);
+    --secondary: oklch(0.92 0.012 240);
+    --secondary-foreground: oklch(0.22 0.02 240);
+    --muted: oklch(0.93 0.01 240);
+    --muted-foreground: oklch(0.46 0.02 240);
+    --accent: oklch(0.5 0.15 152);
+    --accent-foreground: oklch(0.98 0.01 152);
+    --destructive: oklch(0.55 0.22 25);
+    --destructive-foreground: oklch(0.98 0.005 25);
+    --border: oklch(0.85 0.008 240);
+    --input: oklch(0.85 0.008 240);
+    --ring: oklch(0.5 0.19 237);
+  }
+
+  @page {
+    margin: 1.2cm;
+  }
+}
