@@ -18,6 +18,7 @@ import {
 } from "@/components/icons";
 import { getSessao, useConnecta } from "@/lib/connecta-store";
 import { useTema } from "@/lib/tema";
+import { podeAcessar, type Pagina } from "@/lib/permissoes";
 import { getInitials } from "@/lib/initials";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -37,22 +38,28 @@ export const Route = createFileRoute("/_app")({
   component: AppLayout,
 });
 
-const itens = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/contas-a-pagar", label: "Contas a Pagar", icon: Wallet },
-  { to: "/contas-a-receber", label: "Contas a Receber", icon: HandCoins },
-  { to: "/clientes", label: "Clientes", icon: Contact },
-  { to: "/veiculos", label: "Veículos", icon: Car },
-  { to: "/ordens-servico", label: "Ordens de Serviço", icon: Wrench },
-  { to: "/estoque", label: "Estoque", icon: Package },
-  { to: "/usuarios", label: "Usuários", icon: Users },
-] as const;
+const itens: { to: string; label: string; icon: typeof LayoutDashboard; pagina: Pagina }[] = [
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, pagina: "dashboard" },
+  { to: "/contas-a-pagar", label: "Contas a Pagar", icon: Wallet, pagina: "contas-a-pagar" },
+  {
+    to: "/contas-a-receber",
+    label: "Contas a Receber",
+    icon: HandCoins,
+    pagina: "contas-a-receber",
+  },
+  { to: "/clientes", label: "Clientes", icon: Contact, pagina: "clientes" },
+  { to: "/veiculos", label: "Veículos", icon: Car, pagina: "veiculos" },
+  { to: "/ordens-servico", label: "Ordens de Serviço", icon: Wrench, pagina: "ordens-servico" },
+  { to: "/estoque", label: "Estoque", icon: Package, pagina: "estoque" },
+  { to: "/usuarios", label: "Usuários", icon: Users, pagina: "usuarios" },
+];
 
 function AppLayout() {
   const [aberta, setAberta] = useState(true);
   const { sessao, logout } = useConnecta();
   const { tema, setTema } = useTema(sessao);
   const navigate = useNavigate();
+  const itensVisiveis = itens.filter((item) => podeAcessar(sessao?.papel, item.pagina));
 
   useEffect(() => {
     document.documentElement.classList.toggle("light", tema === "light");
@@ -97,7 +104,7 @@ function AppLayout() {
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-2">
-          {itens.map(({ to, label, icon: Icon }) => (
+          {itensVisiveis.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}

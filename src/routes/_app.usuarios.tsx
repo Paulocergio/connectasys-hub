@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { podeAcessar } from "@/lib/permissoes";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Search, UserCog } from "@/components/icons";
@@ -31,12 +32,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useConnecta } from "@/lib/connecta-store";
+import { getSessao, useConnecta } from "@/lib/connecta-store";
 import { apiFetch } from "@/lib/api";
 import { RoleBadge } from "@/components/role-badge";
 
 export const Route = createFileRoute("/_app/usuarios")({
   ssr: false,
+  beforeLoad: () => {
+    if (!podeAcessar(getSessao()?.papel, "usuarios")) throw redirect({ to: "/dashboard" });
+  },
   component: UsuariosPage,
 });
 

@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getSessao } from "@/lib/connecta-store";
+import { podeAcessar } from "@/lib/permissoes";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Search, Contact } from "@/components/icons";
@@ -28,6 +30,9 @@ import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/clientes")({
   ssr: false,
+  beforeLoad: () => {
+    if (!podeAcessar(getSessao()?.papel, "clientes")) throw redirect({ to: "/dashboard" });
+  },
   component: ClientesPage,
 });
 

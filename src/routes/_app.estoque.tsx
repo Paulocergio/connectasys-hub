@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getSessao } from "@/lib/connecta-store";
+import { podeAcessar } from "@/lib/permissoes";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Search, Package, TriangleAlert } from "@/components/icons";
@@ -29,6 +31,9 @@ import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/estoque")({
   ssr: false,
+  beforeLoad: () => {
+    if (!podeAcessar(getSessao()?.papel, "estoque")) throw redirect({ to: "/dashboard" });
+  },
   component: EstoquePage,
 });
 
@@ -189,7 +194,8 @@ function EstoquePage() {
   function onMargemChange(valor: string) {
     const compra = paraNumero(form.precoCompra);
     const margem = paraNumero(valor);
-    const novoPrecoVenda = compra > 0 ? (compra * (1 + margem / 100)).toFixed(2).replace(".", ",") : form.precoVenda;
+    const novoPrecoVenda =
+      compra > 0 ? (compra * (1 + margem / 100)).toFixed(2).replace(".", ",") : form.precoVenda;
     setForm({ ...form, margem: valor, precoVenda: novoPrecoVenda });
   }
 
@@ -281,9 +287,7 @@ function EstoquePage() {
                   <td className="px-5 py-3 text-muted-foreground">
                     {formatarMoeda(e.precoCompra)}
                   </td>
-                  <td className="px-5 py-3 text-muted-foreground">
-                    {formatarMoeda(e.precoVenda)}
-                  </td>
+                  <td className="px-5 py-3 text-muted-foreground">{formatarMoeda(e.precoVenda)}</td>
                   <td className="px-5 py-3 text-muted-foreground">
                     {formatarPercentual(calcularMargem(e.precoCompra, e.precoVenda))}%
                   </td>

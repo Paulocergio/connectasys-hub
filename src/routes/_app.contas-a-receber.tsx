@@ -1,4 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { getSessao } from "@/lib/connecta-store";
+import { podeAcessar } from "@/lib/permissoes";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Search, HandCoins } from "@/components/icons";
@@ -37,6 +39,9 @@ import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/contas-a-receber")({
   ssr: false,
+  beforeLoad: () => {
+    if (!podeAcessar(getSessao()?.papel, "contas-a-receber")) throw redirect({ to: "/dashboard" });
+  },
   component: ContasAReceberPage,
 });
 

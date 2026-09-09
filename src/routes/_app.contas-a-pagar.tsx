@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getSessao } from "@/lib/connecta-store";
+import { podeAcessar } from "@/lib/permissoes";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Search, Wallet } from "@/components/icons";
@@ -37,6 +39,9 @@ import { apiFetch } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/contas-a-pagar")({
   ssr: false,
+  beforeLoad: () => {
+    if (!podeAcessar(getSessao()?.papel, "contas-a-pagar")) throw redirect({ to: "/dashboard" });
+  },
   component: ContasAPagarPage,
 });
 
@@ -290,9 +295,7 @@ function ContasAPagarPage() {
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
                 <Wallet className="h-5 w-5" />
               </span>
-              <DialogTitle>
-                {editando ? "Editar Conta a Pagar" : "Nova Conta a Pagar"}
-              </DialogTitle>
+              <DialogTitle>{editando ? "Editar Conta a Pagar" : "Nova Conta a Pagar"}</DialogTitle>
             </div>
             <DialogDescription>
               {editando

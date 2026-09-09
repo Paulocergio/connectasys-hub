@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getSessao } from "@/lib/connecta-store";
+import { podeAcessar } from "@/lib/permissoes";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -53,6 +55,9 @@ const searchSchema = z.object({ os: z.coerce.number().optional() });
 export const Route = createFileRoute("/_app/ordens-servico")({
   ssr: false,
   validateSearch: searchSchema,
+  beforeLoad: () => {
+    if (!podeAcessar(getSessao()?.papel, "ordens-servico")) throw redirect({ to: "/dashboard" });
+  },
   component: OrdensServicoPage,
 });
 
