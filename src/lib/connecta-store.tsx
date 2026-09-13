@@ -10,7 +10,14 @@ import {
 import { apiFetch, clearSessao, setToken, SESSION_KEY } from "@/lib/api";
 import type { Tema } from "@/lib/tema";
 
-export type Sessao = { id: string; nome: string; email: string; papel: string; tema: Tema };
+export type Sessao = {
+  id: string;
+  nome: string;
+  email: string;
+  papel: string;
+  tema: Tema;
+  trialExpiraEmUtc: string;
+};
 
 type LoginResponse = {
   token: string;
@@ -19,6 +26,15 @@ type LoginResponse = {
   nome: string;
   role: string;
   tema: string;
+  trialExpiraEmUtc: string;
+};
+
+export type RegistrarDados = {
+  nomeEmpresa: string;
+  nomeUsuario: string;
+  email: string;
+  telefone: string;
+  senha: string;
 };
 
 export function getSessao(): Sessao | null {
@@ -34,6 +50,7 @@ export function getSessao(): Sessao | null {
 type Ctx = {
   sessao: Sessao | null;
   login: (email: string, senha: string) => Promise<{ ok: boolean; erro?: string }>;
+  registrar: (dados: RegistrarDados) => Promise<{ ok: boolean; erro?: string }>;
   logout: () => void;
 };
 
@@ -46,25 +63,43 @@ export function ConnectaProvider({ children }: { children: ReactNode }) {
     setSessao(getSessao());
   }, []);
 
+  function aplicarSessao(resposta: LoginResponse, email: string) {
+    const s: Sessao = {
+      id: resposta.usuarioId,
+      nome: resposta.nome,
+      email,
+      papel: resposta.role,
+      tema: resposta.tema === "dark" ? "dark" : "light",
+      trialExpiraEmUtc: resposta.trialExpiraEmUtc,
+    };
+    setToken(resposta.token);
+    window.localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+    setSessao(s);
+  }
+
   const login: Ctx["login"] = useCallback(async (email, senha) => {
     try {
       const resposta = await apiFetch<LoginResponse>("/api/Auth/login", {
         method: "POST",
         body: JSON.stringify({ email, senha }),
       });
-      const s: Sessao = {
-        id: resposta.usuarioId,
-        nome: resposta.nome,
-        email,
-        papel: resposta.role,
-        tema: resposta.tema === "dark" ? "dark" : "light",
-      };
-      setToken(resposta.token);
-      window.localStorage.setItem(SESSION_KEY, JSON.stringify(s));
-      setSessao(s);
+      aplicarSessao(resposta, email);
       return { ok: true };
     } catch (erro) {
       return { ok: false, erro: erro instanceof Error ? erro.message : "Falha no login." };
+    }
+  }, []);
+
+  const registrar: Ctx["registrar"] = useCallback(async (dados) => {
+    try {
+      const resposta = await apiFetch<LoginResponse>("/api/Auth/registrar", {
+        method: "POST",
+        body: JSON.stringify(dados),
+      });
+      aplicarSessao(resposta, dados.email);
+      return { ok: true };
+    } catch (erro) {
+      return { ok: false, erro: erro instanceof Error ? erro.message : "Falha no cadastro." };
     }
   }, []);
 
@@ -73,7 +108,10 @@ export function ConnectaProvider({ children }: { children: ReactNode }) {
     setSessao(null);
   }, []);
 
-  const value = useMemo(() => ({ sessao, login, logout }), [sessao, login, logout]);
+  const value = useMemo(
+    () => ({ sessao, login, registrar, logout }),
+    [sessao, login, registrar, logout],
+  );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

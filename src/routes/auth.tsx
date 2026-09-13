@@ -1,10 +1,19 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Gauge } from "@/components/icons";
+import { Gauge, TriangleAlert } from "@/components/icons";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useConnecta } from "@/lib/connecta-store";
 import { Blob } from "@/components/landing/Blob";
@@ -36,10 +45,12 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { tab } = Route.useSearch();
   const navigate = useNavigate();
-  const { login } = useConnecta();
+  const { login, registrar } = useConnecta();
   const [aba, setAba] = useState<"login" | "cadastro">(tab ?? "login");
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [termosAceitos, setTermosAceitos] = useState(false);
+  const [termosAbertos, setTermosAbertos] = useState(false);
 
   async function onLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -53,6 +64,37 @@ function AuthPage() {
     }
     setErro(null);
     toast.success("Bem-vindo de volta!");
+    navigate({ to: "/dashboard" });
+  }
+
+  async function onCadastro(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const senha = String(f.get("senha"));
+    const confirmarSenha = String(f.get("confirmarSenha"));
+    if (senha !== confirmarSenha) {
+      setErro("As senhas não coincidem.");
+      return;
+    }
+    if (!termosAceitos) {
+      setErro("Você precisa aceitar os termos do período de teste pra continuar.");
+      return;
+    }
+    setEnviando(true);
+    const r = await registrar({
+      nomeEmpresa: String(f.get("nomeEmpresa")),
+      nomeUsuario: String(f.get("nomeUsuario")),
+      email: String(f.get("email")),
+      telefone: String(f.get("telefone")),
+      senha,
+    });
+    setEnviando(false);
+    if (!r.ok) {
+      setErro(r.erro ?? "Falha no cadastro.");
+      return;
+    }
+    setErro(null);
+    toast.success("Oficina cadastrada! Seu teste de 3 dias já começou.");
     navigate({ to: "/dashboard" });
   }
 
@@ -124,10 +166,96 @@ function AuthPage() {
               </Button>
             </form>
           ) : (
-            <p className="rounded-lg border border-border/60 bg-secondary/40 px-4 py-6 text-center text-sm text-muted-foreground">
-              Cadastro de novas oficinas estará disponível em breve. Peça ao administrador da sua
-              oficina pra criar seu acesso.
-            </p>
+            <form onSubmit={onCadastro} className="space-y-4">
+              <p className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
+                3 dias de teste grátis, sem cartão de crédito.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="nomeEmpresa">Nome da oficina</Label>
+                <Input
+                  id="nomeEmpresa"
+                  name="nomeEmpresa"
+                  required
+                  placeholder="Auto Center Silva"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nomeUsuario">Seu nome</Label>
+                <Input
+                  id="nomeUsuario"
+                  name="nomeUsuario"
+                  required
+                  placeholder="Seu nome completo"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cadastro-email">E-mail</Label>
+                <Input
+                  id="cadastro-email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="voce@oficina.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input id="telefone" name="telefone" required placeholder="(11) 99999-9999" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="cadastro-senha">Senha</Label>
+                  <Input
+                    id="cadastro-senha"
+                    name="senha"
+                    type="password"
+                    required
+                    minLength={6}
+                    placeholder="••••••"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmarSenha">Confirmar senha</Label>
+                  <Input
+                    id="confirmarSenha"
+                    name="confirmarSenha"
+                    type="password"
+                    required
+                    minLength={6}
+                    placeholder="••••••"
+                  />
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <Checkbox
+                  id="termos"
+                  checked={termosAceitos}
+                  onCheckedChange={(v) => setTermosAceitos(v === true)}
+                  className="mt-0.5"
+                />
+                <Label
+                  htmlFor="termos"
+                  className="text-xs leading-relaxed font-normal text-muted-foreground"
+                >
+                  Li e aceito os{" "}
+                  <button
+                    type="button"
+                    onClick={() => setTermosAbertos(true)}
+                    className="font-medium text-primary underline-offset-2 hover:underline"
+                  >
+                    termos do período de teste
+                  </button>
+                  , incluindo a exclusão dos dados caso o teste expire.
+                </Label>
+              </div>
+              <Button
+                type="submit"
+                disabled={enviando || !termosAceitos}
+                className="w-full rounded-full font-bold shadow-lg shadow-primary/25 transition-all hover:scale-[1.02] hover:shadow-primary/40"
+              >
+                {enviando ? "Criando conta..." : "Começar teste de 3 dias"}
+              </Button>
+            </form>
           )}
         </div>
 
@@ -137,6 +265,60 @@ function AuthPage() {
           </Link>
         </p>
       </div>
+
+      <Dialog open={termosAbertos} onOpenChange={setTermosAbertos}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-lg">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/12 text-destructive">
+                <TriangleAlert className="h-5 w-5" />
+              </span>
+              <DialogTitle>Termos do período de teste</DialogTitle>
+            </div>
+            <DialogDescription>Leia com atenção antes de criar sua conta.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 text-sm leading-relaxed text-foreground">
+            <p>Ao criar sua conta no ConnectaSys, você concorda com o seguinte:</p>
+
+            <ol className="list-decimal space-y-3 pl-5">
+              <li>
+                Você tem acesso gratuito ao sistema por um período de teste que vai até o fim do dia
+                seguinte ao cadastro — por exemplo, cadastrando hoje dia 13, o acesso é bloqueado a
+                partir do dia 15.
+              </li>
+              <li>
+                Depois desse prazo, se a assinatura não tiver sido contratada, o acesso é bloqueado
+                automaticamente, sem aviso prévio adicional além deste.
+              </li>
+              <li className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 font-medium text-destructive-foreground">
+                Assim que o acesso é bloqueado,{" "}
+                <strong>todos os dados da sua oficina são apagados permanentemente</strong> do
+                sistema — clientes, veículos, ordens de serviço, estoque, financeiro e usuários.
+                Essa exclusão é automática, definitiva, e <strong>não existe backup</strong>: não há
+                como recuperar os dados depois disso.
+              </li>
+              <li>
+                Se quiser continuar usando o sistema depois do teste, entre em contato antes do
+                vencimento pra combinar a assinatura e evitar a exclusão.
+              </li>
+            </ol>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              className="w-full rounded-full font-bold"
+              onClick={() => {
+                setTermosAceitos(true);
+                setTermosAbertos(false);
+              }}
+            >
+              Entendi e aceito
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -282,7 +282,7 @@ function Landing() {
                 className="rounded-full px-8 font-bold shadow-xl shadow-primary/30 transition-all duration-300 hover:scale-105 hover:shadow-primary/50"
               >
                 <Link to="/auth" search={{ tab: "cadastro" }}>
-                  Começar teste de 14 dias
+                  Começar teste de 3 dias
                   <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
@@ -522,7 +522,7 @@ function Landing() {
                 Pronto para organizar sua oficina?
               </h2>
               <p className="mx-auto mt-4 max-w-lg text-lg text-white/90">
-                Comece hoje com 14 dias grátis. Sem cartão de crédito, sem burocracia.
+                Comece hoje com 3 dias grátis. Sem cartão de crédito, sem burocracia.
               </p>
               <Button
                 asChild
