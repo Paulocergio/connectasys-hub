@@ -1,11 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Wrench,
-  CalendarClock,
   Package,
-  Receipt,
-  Users,
-  BarChart3,
   Check,
   Gauge,
   Star,
@@ -13,12 +8,11 @@ import {
   Building2,
   ChevronDown,
   Sparkles,
-  Zap,
 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Blob } from "@/components/landing/Blob";
 import { OficinaIllustration } from "@/components/landing/OficinaIllustration";
-import { ProductPreview } from "@/components/landing/ProductPreview";
+import { BentoGrid } from "@/components/landing/BentoGrid";
 import { Marquee } from "@/components/landing/Marquee";
 import { useState } from "react";
 
@@ -45,51 +39,6 @@ export const Route = createFileRoute("/")({
   }),
   component: Landing,
 });
-
-const recursos = [
-  {
-    icon: Wrench,
-    t: "Ordens de serviço",
-    d: "Do orçamento à entrega, com histórico completo por veículo — peças, mão de obra e aprovação do cliente em um só lugar.",
-    cor: "primary",
-    span: true,
-  },
-  {
-    icon: CalendarClock,
-    t: "Agenda de box",
-    d: "Distribua serviços entre mecânicos e elevadores com drag-and-drop intuitivo.",
-    cor: "accent",
-    span: false,
-  },
-  {
-    icon: Package,
-    t: "Estoque de peças",
-    d: "Entradas, saídas e alerta de estoque mínimo em tempo real.",
-    cor: "chart4",
-    span: false,
-  },
-  {
-    icon: Receipt,
-    t: "Financeiro",
-    d: "Contas a pagar e receber com fluxo de caixa diário e projeções.",
-    cor: "chart5",
-    span: false,
-  },
-  {
-    icon: Users,
-    t: "Clientes e frotas",
-    d: "Cadastro completo com veículos, contatos e histórico de atendimento.",
-    cor: "chart3",
-    span: false,
-  },
-  {
-    icon: BarChart3,
-    t: "Indicadores",
-    d: "Ticket médio, produtividade e retorno de clientes, acompanhados em tempo real pela gerência.",
-    cor: "primary",
-    span: true,
-  },
-] as const;
 
 const oficinasFicticias = [
   "Auto Center Silva",
@@ -143,6 +92,33 @@ const planos = [
     cor: "accent",
   },
 ];
+
+const depoimentos = [
+  {
+    nome: "Marcos Silva",
+    cargo: "Auto Center Silva",
+    texto:
+      "Trocamos três planilhas e um caderno por um painel só. Hoje eu sei o status de cada OS sem levantar da cadeira.",
+    iniciais: "MS",
+    cor: "primary",
+  },
+  {
+    nome: "Camila Rocha",
+    cargo: "Rápido Motors",
+    texto:
+      "O alerta de estoque mínimo já evitou parar serviço no meio por falta de peça. Pagou a assinatura no primeiro mês.",
+    iniciais: "CR",
+    cor: "accent",
+  },
+  {
+    nome: "José Almeida",
+    cargo: "Oficina do Zé",
+    texto:
+      "Minha equipe não é grande fã de sistema, mas esse pegaram rápido. A agenda visual fez toda diferença no dia a dia.",
+    iniciais: "JA",
+    cor: "chart4",
+  },
+] as const;
 
 const faqData = [
   {
@@ -200,7 +176,7 @@ function Landing() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   return (
-    <div className="landing-theme min-h-screen overflow-x-hidden bg-background text-foreground">
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       {/* Gradient background mesh */}
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute top-0 left-1/4 h-[600px] w-[600px] rounded-full bg-primary/5 blur-[120px]" />
@@ -218,6 +194,9 @@ function Landing() {
           <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
             <a href="#recursos" className="transition-colors hover:text-foreground">
               Recursos
+            </a>
+            <a href="#depoimentos" className="transition-colors hover:text-foreground">
+              Depoimentos
             </a>
             <a href="#planos" className="transition-colors hover:text-foreground">
               Planos
@@ -245,17 +224,17 @@ function Landing() {
 
       <main>
         {/* HERO */}
-        <section className="relative overflow-hidden px-5 pt-20 pb-16 sm:pt-32 sm:pb-24">
-          <Blob className="pointer-events-none absolute -top-24 -left-32 h-[28rem] w-[28rem] animate-pulse text-primary/15" />
-          <Blob className="pointer-events-none absolute -right-24 top-10 h-80 w-80 text-accent/15" />
+        <section className="relative overflow-hidden px-5 pt-20 pb-16 sm:pt-28 sm:pb-24">
+          <div className="bg-dot-grid pointer-events-none absolute inset-x-0 top-0 -z-10 h-[46rem]" />
+          <Blob className="pointer-events-none absolute -top-24 -left-32 h-96 w-96 text-primary/8" />
 
-          <div className="relative mx-auto max-w-4xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-bold tracking-wider text-primary uppercase">
+          <div className="relative mx-auto max-w-3xl text-center">
+            <span className="animate-in fade-in slide-in-from-bottom-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 font-mono text-xs font-bold tracking-wider text-primary uppercase duration-700">
               <Sparkles className="h-3.5 w-3.5" />
               Sistema multitenant para oficinas
             </span>
 
-            <h1 className="mt-7 text-5xl leading-[1.02] font-bold tracking-tight sm:text-7xl lg:text-[5.5rem]">
+            <h1 className="animate-in fade-in slide-in-from-bottom-6 mt-7 text-5xl leading-[1.02] font-bold tracking-tight delay-100 duration-700 fill-mode-both sm:text-6xl lg:text-7xl">
               A oficina inteira em{" "}
               <span className="relative inline-block">
                 <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
@@ -291,12 +270,12 @@ function Landing() {
               </span>
             </h1>
 
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+            <p className="animate-in fade-in slide-in-from-bottom-6 mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground delay-200 duration-700 fill-mode-both">
               Ordens de serviço, agenda de box, estoque de peças e financeiro. O ConnectaSys tira a
               gestão do caderno e coloca sua equipe no mesmo ritmo.
             </p>
 
-            <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <div className="animate-in fade-in slide-in-from-bottom-6 mt-10 flex flex-wrap justify-center gap-4 delay-300 duration-700 fill-mode-both">
               <Button
                 asChild
                 size="lg"
@@ -317,17 +296,16 @@ function Landing() {
               </Button>
             </div>
 
-            <div className="mt-14 flex flex-wrap justify-center gap-10 sm:gap-14">
+            <div className="animate-in fade-in mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 delay-500 duration-700 fill-mode-both">
               {[
                 ["1.240", "oficinas ativas"],
                 ["380 mil", "OS emitidas"],
                 ["4,9/5", "satisfação"],
-              ].map(([n, l]) => (
-                <div key={l} className="text-center">
-                  <p className="bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-3xl font-black text-transparent sm:text-4xl">
-                    {n}
-                  </p>
-                  <p className="mt-1 text-sm font-medium tracking-wide text-muted-foreground uppercase">
+              ].map(([n, l], i) => (
+                <div key={l} className="flex items-center gap-8">
+                  {i > 0 && <span className="hidden h-8 w-px bg-border sm:block" />}
+                  <p className="flex items-baseline gap-1.5 font-mono text-sm text-muted-foreground">
+                    <span className="text-base font-bold text-foreground">{n}</span>
                     {l}
                   </p>
                 </div>
@@ -335,106 +313,76 @@ function Landing() {
             </div>
           </div>
 
-          <div className="relative mx-auto mt-20 max-w-5xl">
-            <div className="absolute inset-x-10 top-8 -z-10 h-full rounded-[2.5rem] bg-gradient-to-br from-primary/20 via-chart-5/15 to-accent/20 blur-3xl" />
-            <div className="overflow-hidden rounded-3xl border border-border/60 bg-card/80 shadow-2xl backdrop-blur-sm">
-              <ProductPreview />
-            </div>
-
-            <div className="absolute -bottom-8 -left-6 hidden animate-bounce items-center gap-3 rounded-2xl border border-border/60 bg-card/90 px-5 py-4 shadow-2xl backdrop-blur-md sm:flex">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white shadow-lg">
-                <Star className="h-5 w-5 fill-current" />
-              </span>
-              <div>
-                <p className="text-sm font-bold">4,9 de 5</p>
-                <p className="text-xs text-muted-foreground">avaliação das oficinas</p>
-              </div>
-            </div>
-
-            <div className="absolute -top-4 -right-4 hidden items-center gap-3 rounded-2xl border border-border/60 bg-card/90 px-5 py-4 shadow-2xl backdrop-blur-md sm:flex">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-chart-4 text-white shadow-lg">
-                <Zap className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-sm font-bold">Setup em 5 min</p>
-                <p className="text-xs text-muted-foreground">comece a usar hoje</p>
-              </div>
-            </div>
+          <div
+            id="recursos"
+            className="animate-in fade-in slide-in-from-bottom-8 relative mx-auto mt-16 max-w-5xl scroll-mt-24 delay-500 duration-1000 fill-mode-both"
+          >
+            <BentoGrid />
           </div>
         </section>
 
         {/* MARQUEE */}
         <section className="border-y border-border/60 bg-gradient-to-r from-primary/[0.03] via-transparent to-accent/[0.03] py-10">
-          <p className="mb-6 text-center text-xs font-bold tracking-widest text-muted-foreground uppercase">
+          <p className="mb-6 text-center font-mono text-xs font-bold tracking-widest text-muted-foreground uppercase">
             Oficinas que já organizam a operação com o ConnectaSys
           </p>
           <Marquee items={oficinasFicticias} />
         </section>
 
-        {/* RECURSOS */}
-        <section id="recursos" className="mx-auto max-w-6xl px-5 py-28">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-bold tracking-wider text-accent uppercase">
-              Módulos
+        {/* DEPOIMENTOS */}
+        <section id="depoimentos" className="mx-auto max-w-6xl px-5 py-28">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-chart-4/30 bg-chart-4/10 px-3 py-1 font-mono text-xs font-bold tracking-wider text-chart-4 uppercase">
+              Quem já usa
             </span>
             <h2 className="mt-5 text-4xl font-extrabold tracking-tight">
-              Tudo que a oficina precisa
+              Oficinas de verdade, resultado de verdade
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-              Módulos que conversam entre si — sem planilha paralela, sem informação perdida.
+              Donos de oficina que trocaram o caderno pelo ConnectaSys.
             </p>
           </div>
 
-          <div className="mt-14 grid auto-rows-[minmax(0,1fr)] gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {recursos.map(({ icon: Icon, t, d, cor, span }) => {
-              const c = corMap[cor];
+          <div className="mt-14 grid gap-4 sm:grid-cols-3">
+            {depoimentos.map((d) => {
+              const c = corMap[d.cor];
               return (
                 <div
-                  key={t}
-                  className={`group relative rounded-3xl border border-border/60 bg-card/60 p-7 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl ${c.glow} ${span ? "sm:col-span-2" : ""}`}
+                  key={d.nome}
+                  className="flex flex-col rounded-2xl border border-border bg-card/80 p-6 transition-colors hover:border-border/100"
                 >
-                  <div
-                    className={`absolute inset-0 rounded-3xl ${c.bg} opacity-0 transition-opacity duration-500 group-hover:opacity-100`}
-                  />
-                  <div className="relative">
+                  <div className="flex gap-0.5 text-chart-5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className="h-3.5 w-3.5 fill-current" />
+                    ))}
+                  </div>
+                  <p className="mt-4 flex-1 leading-relaxed text-foreground/90">“{d.texto}”</p>
+                  <div className="mt-6 flex items-center gap-3 border-t border-border pt-5">
                     <span
-                      className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl ${c.bg} ${c.text} shadow-lg ${c.glow} transition-transform duration-300 group-hover:scale-110`}
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${c.bg} ${c.text}`}
                     >
-                      <Icon className="h-7 w-7" />
+                      {d.iniciais}
                     </span>
-                    <h3 className="mt-5 text-xl font-bold">{t}</h3>
-                    <p className="mt-3 leading-relaxed text-muted-foreground">{d}</p>
+                    <div>
+                      <p className="text-sm font-bold">{d.nome}</p>
+                      <p className="font-mono text-xs text-muted-foreground">{d.cargo}</p>
+                    </div>
                   </div>
                 </div>
               );
             })}
-
-            <a
-              href="#planos"
-              className="group relative flex flex-col justify-between rounded-3xl border-2 border-dashed border-primary/30 bg-primary/5 p-7 transition-all duration-300 hover:-translate-y-2 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10"
-            >
-              <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/25 transition-transform group-hover:scale-110">
-                <ArrowRight className="h-7 w-7 transition-transform group-hover:translate-x-1" />
-              </span>
-              <div>
-                <h3 className="mt-5 text-xl font-bold">Ver todos os módulos</h3>
-                <p className="mt-3 text-muted-foreground">
-                  Conheça os planos disponíveis e escolha o ideal para sua oficina.
-                </p>
-              </div>
-            </a>
           </div>
         </section>
 
         {/* PLANOS */}
         <section id="planos" className="relative overflow-hidden px-5 py-28">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.03] to-accent/[0.03]" />
-          <Blob className="pointer-events-none absolute -top-16 -left-20 h-72 w-72 text-primary/10" />
-          <Blob className="pointer-events-none absolute -right-20 -bottom-20 h-72 w-72 text-accent/10" />
+          <Blob className="pointer-events-none absolute -top-16 -left-20 h-72 w-72 text-primary/6" />
+          <Blob className="pointer-events-none absolute -right-20 -bottom-20 h-72 w-72 text-accent/6" />
 
           <div className="relative mx-auto max-w-6xl">
             <div className="text-center">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold tracking-wider text-primary uppercase">
+              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 font-mono text-xs font-bold tracking-wider text-primary uppercase">
                 Planos
               </span>
               <h2 className="mt-6 text-4xl font-extrabold tracking-tight">
@@ -451,10 +399,11 @@ function Landing() {
                 return (
                   <div
                     key={p.nome}
-                    className={`relative flex flex-col rounded-3xl border p-8 transition-all duration-300 ${p.destaque
-                        ? "border-primary/40 bg-gradient-to-b from-primary/10 via-card to-card shadow-2xl shadow-primary/15 lg:-translate-y-4 lg:scale-105"
-                        : "border-border/60 bg-card/80 shadow-lg backdrop-blur-sm hover:-translate-y-2 hover:shadow-xl"
-                      }`}
+                    className={`relative flex flex-col rounded-2xl border p-8 transition-all duration-300 ${
+                      p.destaque
+                        ? "border-primary/50 bg-card shadow-xl shadow-primary/10 lg:-translate-y-3"
+                        : "border-border bg-card/80 hover:-translate-y-1 hover:border-border/100"
+                    }`}
                   >
                     {p.destaque && (
                       <span className="absolute -top-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-white shadow-lg shadow-primary/30">
@@ -464,10 +413,11 @@ function Landing() {
                     )}
 
                     <span
-                      className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl ${p.destaque
+                      className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl ${
+                        p.destaque
                           ? "bg-primary text-white shadow-lg shadow-primary/25"
                           : `${c.bg} ${c.text}`
-                        }`}
+                      }`}
                     >
                       <p.icon className="h-7 w-7" />
                     </span>
@@ -500,10 +450,11 @@ function Landing() {
                     </div>
                     <Button
                       asChild
-                      className={`mt-8 rounded-full font-bold transition-all duration-300 ${p.destaque
+                      className={`mt-8 rounded-full font-bold transition-all duration-300 ${
+                        p.destaque
                           ? "shadow-lg shadow-primary/25 hover:scale-105 hover:shadow-primary/40"
                           : "border-2 hover:border-primary/30 hover:bg-primary/5"
-                        }`}
+                      }`}
                       variant={p.destaque ? "default" : "outline"}
                     >
                       <Link to="/auth" search={{ tab: "cadastro" }}>
@@ -520,7 +471,7 @@ function Landing() {
         {/* FAQ */}
         <section id="faq" className="mx-auto max-w-3xl px-5 py-28">
           <div className="mb-12 text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-bold tracking-wider text-accent uppercase">
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 font-mono text-xs font-bold tracking-wider text-accent uppercase">
               Dúvidas
             </span>
             <h2 className="mt-5 text-4xl font-extrabold tracking-tight">Perguntas frequentes</h2>
@@ -530,8 +481,9 @@ function Landing() {
             {faqData.map((item, idx) => (
               <div
                 key={idx}
-                className={`overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm transition-all duration-300 ${openFaq === idx ? "shadow-lg" : "shadow-sm hover:shadow-md"
-                  }`}
+                className={`overflow-hidden rounded-2xl border bg-card/80 transition-colors duration-300 ${
+                  openFaq === idx ? "border-primary/30" : "border-border hover:border-border/100"
+                }`}
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
@@ -543,8 +495,9 @@ function Landing() {
                   />
                 </button>
                 <div
-                  className={`overflow-hidden transition-all duration-300 ${openFaq === idx ? "max-h-40" : "max-h-0"
-                    }`}
+                  className={`overflow-hidden transition-all duration-300 ${
+                    openFaq === idx ? "max-h-40" : "max-h-0"
+                  }`}
                 >
                   <p className="px-6 pb-6 leading-relaxed text-muted-foreground">{item.a}</p>
                 </div>
@@ -555,11 +508,12 @@ function Landing() {
 
         {/* CTA */}
         <section className="px-5 pb-28">
-          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-primary via-chart-5 to-accent px-8 py-20 text-center shadow-2xl shadow-primary/20 sm:px-16">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-primary px-8 py-20 text-center shadow-2xl shadow-primary/20 sm:px-16">
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIvPjwvc3ZnPg==')] opacity-30" />
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-accent/30" />
             <Blob className="pointer-events-none absolute -top-16 -left-10 h-64 w-64 text-white/10" />
 
-            <div className="pointer-events-none absolute -right-10 -bottom-10 hidden w-56 opacity-20 sm:block">
+            <div className="pointer-events-none absolute -right-6 -bottom-12 hidden w-72 opacity-30 drop-shadow-2xl sm:block">
               <OficinaIllustration />
             </div>
 
@@ -598,18 +552,34 @@ function Landing() {
                 </span>
               </Link>
               <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-                Gestão completa para oficinas mecânicas. Feito para quem vive o dia a dia da oficina.
+                Gestão completa para oficinas mecânicas. Feito para quem vive o dia a dia da
+                oficina.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-6 text-sm">
-              <a href="#recursos" className="text-muted-foreground transition-colors hover:text-foreground">
+              <a
+                href="#recursos"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
                 Recursos
               </a>
-              <a href="#planos" className="text-muted-foreground transition-colors hover:text-foreground">
+              <a
+                href="#depoimentos"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Depoimentos
+              </a>
+              <a
+                href="#planos"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
                 Planos
               </a>
-              <a href="#faq" className="text-muted-foreground transition-colors hover:text-foreground">
+              <a
+                href="#faq"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
                 Perguntas
               </a>
               <Link

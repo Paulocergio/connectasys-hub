@@ -31,7 +31,7 @@ const ordens = [
 
 export function ProductPreview() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
       <div className="flex items-center gap-1.5 border-b border-border bg-muted/40 px-4 py-3">
         <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
         <span className="h-2.5 w-2.5 rounded-full bg-primary/60" />
@@ -41,7 +41,7 @@ export function ProductPreview() {
         </span>
       </div>
 
-      <div className="flex">
+      <div className="flex flex-1">
         <div className="hidden w-14 flex-col items-center gap-4 border-r border-border bg-muted/20 py-5 sm:flex">
           {navIcons.map((Icon, i) => (
             <span

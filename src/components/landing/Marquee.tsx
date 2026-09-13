@@ -11,9 +11,9 @@ export function Marquee({ items }: MarqueeProps) {
         {loop.map((item, i) => (
           <span
             key={`${item}-${i}`}
-            className="flex shrink-0 items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-muted-foreground"
+            className="flex shrink-0 items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-muted-foreground shadow-sm transition-colors hover:border-accent/40 hover:text-foreground"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+            <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-br from-accent to-primary" />
             {item}
           </span>
         ))}

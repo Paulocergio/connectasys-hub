@@ -68,6 +68,7 @@ export const Package = criarIcone(BoxClosedOutlined);
 export const PackageSearch = criarIcone(BoxClosedOutlined);
 export const Receipt = criarIcone(BarChartDollarOutlined);
 export const HandCoins = criarIcone(TrendUp1Outlined);
+export const TrendUp = criarIcone(TrendUp1Outlined);
 export const Wallet = criarIcone(Wallet1Outlined);
 export const Banknote = criarIcone(Wallet1Outlined);
 export const CreditCard = criarIcone(CreditCardMultipleOutlined);

@@ -196,6 +196,19 @@
 }
 
 /*
+ * Textura de pontos pra dar profundidade ao fundo da landing page (hero,
+ * seções de destaque), sem imagem — só gradiente radial repetido. Padrão
+ * comum em SaaS moderno (Linear, Vercel, Raycast). Opacidade baixa +
+ * máscara radial pra sumir nas bordas em vez de cortar seco.
+ */
+.bg-dot-grid {
+  background-image: radial-gradient(circle, color-mix(in oklab, var(--foreground) 18%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, black 40%, transparent 80%);
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, black 40%, transparent 80%);
+}
+
+/*
  * Impressão: sempre em tons claros, independente do tema ativo na tela
  * (mesmos valores do tema claro em .light), pra ficar legível em papel.
  */
