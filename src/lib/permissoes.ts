@@ -10,6 +10,7 @@ export const PAPEIS_POR_PAGINA = {
   clientes: ["Admin"],
   veiculos: ["Admin", "Recepcionista"],
   "ordens-servico": ["Admin", "Mecânico", "Recepcionista"],
+  calendario: ["Admin", "Mecânico", "Recepcionista"],
   estoque: ["Admin"],
   usuarios: ["Admin"],
 } as const;

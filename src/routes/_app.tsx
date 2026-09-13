@@ -10,6 +10,7 @@ import {
   Car,
   Wrench,
   Package,
+  CalendarClock,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -50,6 +51,7 @@ const itens: { to: string; label: string; icon: typeof LayoutDashboard; pagina: 
   { to: "/clientes", label: "Clientes", icon: Contact, pagina: "clientes" },
   { to: "/veiculos", label: "Veículos", icon: Car, pagina: "veiculos" },
   { to: "/ordens-servico", label: "Ordens de Serviço", icon: Wrench, pagina: "ordens-servico" },
+  { to: "/calendario", label: "Calendário", icon: CalendarClock, pagina: "calendario" },
   { to: "/estoque", label: "Estoque", icon: Package, pagina: "estoque" },
   { to: "/usuarios", label: "Usuários", icon: Users, pagina: "usuarios" },
 ];

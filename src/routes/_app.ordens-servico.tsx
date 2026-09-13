@@ -80,7 +80,6 @@ type OrdemServicoApi = {
   diagnostico: string | null;
   solucao: string | null;
   dataAbertura: string;
-  previsaoTermino: string | null;
   dataConclusao: string | null;
   valorMaoDeObra: number;
   desconto: number;
@@ -92,7 +91,20 @@ type OrdemServicoApi = {
 
 type ClienteApi = { id: number; nome: string };
 type VeiculoApi = { id: number; clienteId: number; placa: string; marca: string; modelo: string };
-type UsuarioApi = { id: string; nome: string };
+type UsuarioApi = { id: string; nome: string; role: string };
+
+type AgendamentoApi = {
+  id: number;
+  tecnicoId: string;
+  clienteId: number | null;
+  veiculoId: number | null;
+  ordemServicoId: number | null;
+  dataHoraInicio: string;
+  dataHoraFim: string | null;
+  observacao: string | null;
+  status: "Agendado" | "Concluído" | "Cancelado";
+  dataCadastro: string;
+};
 
 type Form = {
   clienteId: string;
@@ -102,12 +114,13 @@ type Form = {
   descricaoProblema: string;
   diagnostico: string;
   solucao: string;
-  previsaoTermino: string;
   dataConclusao: string;
   valorMaoDeObra: string;
   desconto: string;
   aprovacaoClienteNome: string;
   aprovacaoClienteEm: string;
+  agendamentoData: string;
+  agendamentoHorario: string;
 };
 
 const vazio: Form = {
@@ -118,12 +131,13 @@ const vazio: Form = {
   descricaoProblema: "",
   diagnostico: "",
   solucao: "",
-  previsaoTermino: "",
   dataConclusao: "",
   valorMaoDeObra: "",
   desconto: "",
   aprovacaoClienteNome: "",
   aprovacaoClienteEm: "",
+  agendamentoData: "",
+  agendamentoHorario: "",
 };
 
 type ItemForm = {
@@ -241,9 +255,16 @@ function OrdensServicoPage() {
     retry: false,
   });
 
+  const mecanicos = useMemo(() => usuarios.filter((u) => u.role === "Mecânico"), [usuarios]);
+
   const { data: estoque = [] } = useQuery({
     queryKey: ["estoque"],
     queryFn: () => apiFetch<EstoqueApi[]>("/api/Estoque"),
+  });
+
+  const { data: agendamentos = [] } = useQuery({
+    queryKey: ["agendamentos"],
+    queryFn: () => apiFetch<AgendamentoApi[]>("/api/Agendamentos"),
   });
 
   const nomeCliente = (clienteId: number) => clientes.find((c) => c.id === clienteId)?.nome ?? "—";
@@ -256,6 +277,38 @@ function OrdensServicoPage() {
     () => veiculos.filter((v) => v.clienteId === Number(form.clienteId)),
     [veiculos, form.clienteId],
   );
+
+  // Agendamento já existente vinculado a esta OS (se a estivermos editando) —
+  // usado pra não confundir "conflito com o próprio horário atual" com um
+  // conflito de verdade contra outro agendamento.
+  const agendamentoDaOs = editando
+    ? agendamentos.find((a) => a.ordemServicoId === editando.id)
+    : undefined;
+
+  const dataHoraAgendamento =
+    form.agendamentoData && form.agendamentoHorario
+      ? `${form.agendamentoData}T${form.agendamentoHorario}:00`
+      : null;
+
+  const { data: conflito } = useQuery({
+    queryKey: ["conflito-agendamento", form.tecnicoId, dataHoraAgendamento],
+    queryFn: () =>
+      apiFetch<AgendamentoApi | undefined>(
+        `/api/Agendamentos/conflito?tecnicoId=${form.tecnicoId}&dataHora=${encodeURIComponent(dataHoraAgendamento!)}`,
+      ),
+    enabled: Boolean(form.tecnicoId && dataHoraAgendamento),
+  });
+
+  const conflitoRelevante = conflito && conflito.id !== agendamentoDaOs?.id ? conflito : undefined;
+
+  const [conflitoIgnorado, setConflitoIgnorado] = useState(false);
+
+  useEffect(() => {
+    setConflitoIgnorado(false);
+  }, [form.tecnicoId, dataHoraAgendamento]);
+
+  const nomeClienteConflito = (id: number | null) =>
+    id ? (clientes.find((c) => c.id === id)?.nome ?? "—") : "—";
 
   const osAtual = editando ? (ordens.find((o) => o.id === editando.id) ?? editando) : null;
   const itensCount = editando && osAtual ? osAtual.itens.length : itensNovos.length;
@@ -284,13 +337,47 @@ function OrdensServicoPage() {
       descricaoProblema: dados.descricaoProblema,
       diagnostico: dados.diagnostico || null,
       solucao: dados.solucao || null,
-      previsaoTermino: dados.previsaoTermino || null,
       dataConclusao: dados.dataConclusao || null,
       valorMaoDeObra: paraNumero(dados.valorMaoDeObra),
       desconto: paraNumero(dados.desconto),
       aprovacaoClienteNome: dados.aprovacaoClienteNome || null,
       aprovacaoClienteEm: dados.aprovacaoClienteEm || null,
     };
+  }
+
+  // Cria, atualiza ou remove o Agendamento vinculado a esta OS, refletindo o
+  // técnico e o horário escolhidos no formulário (specs/ordens-servico
+  // Cenário 10 / specs/calendario). Silencioso quando não há técnico e
+  // horário definidos e não existia agendamento antes.
+  async function sincronizarAgendamento(
+    ordemServicoId: number,
+    dados: Form,
+    agendamentoExistente: AgendamentoApi | undefined,
+  ) {
+    if (!dados.tecnicoId || !dados.agendamentoData || !dados.agendamentoHorario) {
+      if (agendamentoExistente) {
+        await apiFetch(`/api/Agendamentos/${agendamentoExistente.id}`, { method: "DELETE" });
+      }
+      return;
+    }
+
+    const payload = {
+      tecnicoId: dados.tecnicoId,
+      clienteId: Number(dados.clienteId),
+      veiculoId: Number(dados.veiculoId),
+      ordemServicoId,
+      dataHoraInicio: `${dados.agendamentoData}T${dados.agendamentoHorario}:00`,
+      status: dados.status === "Cancelado" ? "Cancelado" : "Agendado",
+    };
+
+    if (agendamentoExistente) {
+      await apiFetch(`/api/Agendamentos/${agendamentoExistente.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ id: agendamentoExistente.id, ...payload }),
+      });
+    } else {
+      await apiFetch("/api/Agendamentos", { method: "POST", body: JSON.stringify(payload) });
+    }
   }
 
   const criar = useMutation({
@@ -301,7 +388,6 @@ function OrdensServicoPage() {
           clienteId: Number(dados.clienteId),
           veiculoId: Number(dados.veiculoId),
           descricaoProblema: dados.descricaoProblema,
-          previsaoTermino: dados.previsaoTermino || null,
           valorMaoDeObra: paraNumero(dados.valorMaoDeObra),
           desconto: paraNumero(dados.desconto),
         }),
@@ -328,11 +414,14 @@ function OrdensServicoPage() {
         });
       }
 
+      await sincronizarAgendamento(criada.id, dados, undefined);
+
       return criada;
     },
     onSuccess: () => {
       invalidar();
       queryClient.invalidateQueries({ queryKey: ["estoque"] });
+      queryClient.invalidateQueries({ queryKey: ["agendamentos"] });
       setAberto(false);
       setItensNovos([]);
       toast.success("Ordem de serviço criada.");
@@ -341,14 +430,17 @@ function OrdensServicoPage() {
   });
 
   const atualizar = useMutation({
-    mutationFn: ({ id, dados }: { id: number; dados: Form }) =>
-      apiFetch(`/api/OrdensServico/${id}`, {
+    mutationFn: async ({ id, dados }: { id: number; dados: Form }) => {
+      await apiFetch(`/api/OrdensServico/${id}`, {
         method: "PUT",
         body: JSON.stringify({ id, ...montarPayload(dados) }),
-      }),
+      });
+      await sincronizarAgendamento(id, dados, agendamentoDaOs);
+    },
     onSuccess: () => {
       invalidar();
       queryClient.invalidateQueries({ queryKey: ["contas-a-receber"] });
+      queryClient.invalidateQueries({ queryKey: ["agendamentos"] });
       setAberto(false);
       toast.success("Ordem de serviço atualizada.");
     },
@@ -427,6 +519,7 @@ function OrdensServicoPage() {
   function abrirEdicao(o: OrdemServicoApi) {
     setEditando(o);
     setAba("dados");
+    const agendamento = agendamentos.find((a) => a.ordemServicoId === o.id);
     setForm({
       clienteId: String(o.clienteId),
       veiculoId: String(o.veiculoId),
@@ -435,12 +528,13 @@ function OrdensServicoPage() {
       descricaoProblema: o.descricaoProblema,
       diagnostico: o.diagnostico ?? "",
       solucao: o.solucao ?? "",
-      previsaoTermino: o.previsaoTermino ? o.previsaoTermino.slice(0, 10) : "",
       dataConclusao: o.dataConclusao ? o.dataConclusao.slice(0, 10) : "",
       valorMaoDeObra: formatarNumero(o.valorMaoDeObra),
       desconto: formatarNumero(o.desconto),
       aprovacaoClienteNome: o.aprovacaoClienteNome ?? "",
       aprovacaoClienteEm: o.aprovacaoClienteEm ? o.aprovacaoClienteEm.slice(0, 10) : "",
+      agendamentoData: agendamento ? agendamento.dataHoraInicio.slice(0, 10) : "",
+      agendamentoHorario: agendamento ? agendamento.dataHoraInicio.slice(11, 16) : "",
     });
     setItemForm(itemVazio);
     setAberto(true);
@@ -462,6 +556,13 @@ function OrdensServicoPage() {
     }
     if (!form.descricaoProblema.trim()) {
       toast.error("Descreva o problema relatado.");
+      setAba("dados");
+      return;
+    }
+    if (conflitoRelevante && !conflitoIgnorado) {
+      toast.error(
+        "O técnico já tem agendamento nesse horário. Resolva o conflito antes de salvar.",
+      );
       setAba("dados");
       return;
     }
@@ -698,16 +799,68 @@ function OrdensServicoPage() {
                             <SelectValue placeholder="Sem técnico designado" />
                           </SelectTrigger>
                           <SelectContent>
-                            {usuarios.map((u) => (
-                              <SelectItem key={u.id} value={u.id}>
-                                {u.nome}
+                            {mecanicos.length === 0 ? (
+                              <SelectItem value="_sem-mecanico" disabled>
+                                Nenhum mecânico cadastrado
                               </SelectItem>
-                            ))}
+                            ) : (
+                              mecanicos.map((u) => (
+                                <SelectItem key={u.id} value={u.id}>
+                                  {u.nome}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                       )}
                     </div>
                   </div>
+
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="os-agendamento-data">Data do agendamento</Label>
+                      <Input
+                        id="os-agendamento-data"
+                        type="date"
+                        value={form.agendamentoData}
+                        onChange={(e) => setForm({ ...form, agendamentoData: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="os-agendamento-horario">Horário</Label>
+                      <Input
+                        id="os-agendamento-horario"
+                        type="time"
+                        step={180}
+                        value={form.agendamentoHorario}
+                        onChange={(e) => setForm({ ...form, agendamentoHorario: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="os-conclusao">Data de conclusão</Label>
+                      <Input
+                        id="os-conclusao"
+                        type="date"
+                        value={form.dataConclusao}
+                        onChange={(e) => setForm({ ...form, dataConclusao: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  {conflitoRelevante && !conflitoIgnorado && (
+                    <div className="flex items-start justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                      <p>
+                        Este técnico já tem um agendamento em{" "}
+                        {new Date(conflitoRelevante.dataHoraInicio).toLocaleString("pt-BR", {
+                          timeZone: "UTC",
+                        })}
+                        {conflitoRelevante.clienteId
+                          ? ` (${nomeClienteConflito(conflitoRelevante.clienteId)})`
+                          : ""}
+                        .
+                      </p>
+                    </div>
+                  )}
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
@@ -726,27 +879,6 @@ function OrdensServicoPage() {
                         rows={2}
                         value={form.solucao}
                         onChange={(e) => setForm({ ...form, solucao: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="os-previsao">Previsão de término</Label>
-                      <Input
-                        id="os-previsao"
-                        type="date"
-                        value={form.previsaoTermino}
-                        onChange={(e) => setForm({ ...form, previsaoTermino: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="os-conclusao">Data de conclusão</Label>
-                      <Input
-                        id="os-conclusao"
-                        type="date"
-                        value={form.dataConclusao}
-                        onChange={(e) => setForm({ ...form, dataConclusao: e.target.value })}
                       />
                     </div>
                   </div>
@@ -973,12 +1105,50 @@ function OrdensServicoPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <AlertDialog open={Boolean(conflitoRelevante) && !conflitoIgnorado}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Técnico já tem agendamento nesse horário</AlertDialogTitle>
+              <AlertDialogDescription>
+                {conflitoRelevante && (
+                  <>
+                    Já existe um agendamento marcado para{" "}
+                    {new Date(conflitoRelevante.dataHoraInicio).toLocaleString("pt-BR", {
+                      timeZone: "UTC",
+                    })}
+                    {conflitoRelevante.clienteId
+                      ? ` — cliente ${nomeClienteConflito(conflitoRelevante.clienteId)}`
+                      : ""}
+                    . Escolha outro horário ou cancele para manter o atual.
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setConflitoIgnorado(true)}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setAberto(false);
+                  navigate({
+                    to: "/calendario",
+                    search: { tecnicoId: form.tecnicoId, data: form.agendamentoData },
+                  });
+                }}
+              >
+                Alterar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       <div className="hidden print:block">
         {imprimir && (
-          <div className="mx-auto max-w-3xl space-y-3 text-foreground">
-            <div className="flex items-center justify-between border-b border-border pb-2">
+          <div className="mx-auto max-w-3xl space-y-5 text-foreground">
+            <div className="flex items-center justify-between border-b-2 border-border pb-3">
               <div className="flex items-center gap-2">
                 <Wrench className="h-6 w-6 text-primary" />
                 <span className="text-lg font-bold">
@@ -993,59 +1163,69 @@ function OrdensServicoPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
-              <div className="leading-tight">
-                <p className="text-xs uppercase text-muted-foreground">Cliente</p>
-                <p className="font-medium">{nomeCliente(imprimir.clienteId)}</p>
-              </div>
-              <div className="leading-tight">
-                <p className="text-xs uppercase text-muted-foreground">Veículo</p>
-                <p className="font-medium">
-                  {placaVeiculo(imprimir.veiculoId)} — {veiculoDe(imprimir.veiculoId)?.marca}{" "}
-                  {veiculoDe(imprimir.veiculoId)?.modelo}
-                </p>
-              </div>
-              <div className="leading-tight">
-                <p className="text-xs uppercase text-muted-foreground">Status</p>
-                <p className="font-medium">{imprimir.status}</p>
-              </div>
-              <div className="leading-tight">
-                <p className="text-xs uppercase text-muted-foreground">Técnico responsável</p>
-                <p className="font-medium">{nomeTecnico(imprimir.tecnicoId) ?? "—"}</p>
-              </div>
-              {imprimir.previsaoTermino && (
+            <section className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Cliente e veículo
+              </h2>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg border border-border/60 p-3 text-sm">
                 <div className="leading-tight">
-                  <p className="text-xs uppercase text-muted-foreground">Previsão de término</p>
-                  <p className="font-medium">{formatarData(imprimir.previsaoTermino)}</p>
+                  <p className="text-xs uppercase text-muted-foreground">Cliente</p>
+                  <p className="font-medium">{nomeCliente(imprimir.clienteId)}</p>
                 </div>
-              )}
-              {imprimir.dataConclusao && (
                 <div className="leading-tight">
-                  <p className="text-xs uppercase text-muted-foreground">Conclusão</p>
-                  <p className="font-medium">{formatarData(imprimir.dataConclusao)}</p>
+                  <p className="text-xs uppercase text-muted-foreground">Veículo</p>
+                  <p className="font-medium">
+                    {placaVeiculo(imprimir.veiculoId)} — {veiculoDe(imprimir.veiculoId)?.marca}{" "}
+                    {veiculoDe(imprimir.veiculoId)?.modelo}
+                  </p>
                 </div>
-              )}
-            </div>
-
-            <div className="space-y-0.5 text-sm leading-tight">
-              <p className="text-xs uppercase text-muted-foreground">Problema relatado</p>
-              <p>{imprimir.descricaoProblema}</p>
-            </div>
-            {imprimir.diagnostico && (
-              <div className="space-y-0.5 text-sm leading-tight">
-                <p className="text-xs uppercase text-muted-foreground">Diagnóstico</p>
-                <p>{imprimir.diagnostico}</p>
+                <div className="leading-tight">
+                  <p className="text-xs uppercase text-muted-foreground">Status</p>
+                  <p className="font-medium">{imprimir.status}</p>
+                </div>
+                <div className="leading-tight">
+                  <p className="text-xs uppercase text-muted-foreground">Técnico responsável</p>
+                  <p className="font-medium">{nomeTecnico(imprimir.tecnicoId) ?? "—"}</p>
+                </div>
+                {imprimir.dataConclusao && (
+                  <div className="leading-tight">
+                    <p className="text-xs uppercase text-muted-foreground">Conclusão</p>
+                    <p className="font-medium">{formatarData(imprimir.dataConclusao)}</p>
+                  </div>
+                )}
               </div>
-            )}
-            {imprimir.solucao && (
-              <div className="space-y-0.5 text-sm leading-tight">
-                <p className="text-xs uppercase text-muted-foreground">Solução</p>
-                <p>{imprimir.solucao}</p>
-              </div>
+            </section>
+
+            {(imprimir.descricaoProblema || imprimir.diagnostico || imprimir.solucao) && (
+              <section className="space-y-2">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Diagnóstico e solução
+                </h2>
+                <div className="space-y-2 rounded-lg border border-border/60 p-3">
+                  <div className="space-y-0.5 text-sm leading-tight">
+                    <p className="text-xs uppercase text-muted-foreground">Problema relatado</p>
+                    <p>{imprimir.descricaoProblema}</p>
+                  </div>
+                  {imprimir.diagnostico && (
+                    <div className="space-y-0.5 text-sm leading-tight">
+                      <p className="text-xs uppercase text-muted-foreground">Diagnóstico</p>
+                      <p>{imprimir.diagnostico}</p>
+                    </div>
+                  )}
+                  {imprimir.solucao && (
+                    <div className="space-y-0.5 text-sm leading-tight">
+                      <p className="text-xs uppercase text-muted-foreground">Solução</p>
+                      <p>{imprimir.solucao}</p>
+                    </div>
+                  )}
+                </div>
+              </section>
             )}
 
-            <div className="space-y-1">
-              <p className="text-xs uppercase text-muted-foreground">Peças e serviços</p>
+            <section className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Peças e serviços
+              </h2>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left">
@@ -1075,24 +1255,24 @@ function OrdensServicoPage() {
                   )}
                 </tbody>
               </table>
-            </div>
 
-            <div className="ml-auto max-w-xs space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Mão de obra</span>
-                <span>{formatarMoeda(imprimir.valorMaoDeObra)}</span>
+              <div className="ml-auto max-w-xs space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Mão de obra</span>
+                  <span>{formatarMoeda(imprimir.valorMaoDeObra)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Desconto ({formatarNumero(imprimir.desconto)}%)
+                  </span>
+                  <span>-{formatarMoeda(descontoEmReais(imprimir))}</span>
+                </div>
+                <div className="flex justify-between border-t border-border pt-1 font-semibold">
+                  <span>Total</span>
+                  <span>{formatarMoeda(imprimir.valorTotal)}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  Desconto ({formatarNumero(imprimir.desconto)}%)
-                </span>
-                <span>-{formatarMoeda(descontoEmReais(imprimir))}</span>
-              </div>
-              <div className="flex justify-between border-t border-border pt-1 font-semibold">
-                <span>Total</span>
-                <span>{formatarMoeda(imprimir.valorTotal)}</span>
-              </div>
-            </div>
+            </section>
 
             {imprimir.aprovacaoClienteNome && (
               <p className="text-sm">
@@ -1104,14 +1284,14 @@ function OrdensServicoPage() {
               </p>
             )}
 
-            <div className="grid grid-cols-2 gap-8 pt-8 text-sm">
+            <section className="grid grid-cols-2 gap-8 pt-8 text-sm">
               <div className="border-t border-foreground pt-1 text-center">
                 Assinatura do cliente
               </div>
               <div className="border-t border-foreground pt-1 text-center">
                 Assinatura do responsável
               </div>
-            </div>
+            </section>
           </div>
         )}
       </div>

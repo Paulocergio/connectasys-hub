@@ -54,3 +54,13 @@
 - [x] Nenhum item da checklist constitucional do design ficou pendente
 - [x] Nenhuma cor Tailwind literal foi introduzida fora dos tokens
       semânticos
+
+## Ajustes pendentes (rodada de specs 2026-09-13)
+
+- [x] **T006** — Aplicar máscara de dinheiro em tempo real no campo
+      "Valor" (cadastrar e editar), conforme `design.md` §7
+  - `mascaraMoeda`/`formatarNumero`/`paraNumero` adicionados; `npx tsc
+    --noEmit` e `npx eslint` sem erro novo
+  - **Não verificado visualmente no navegador** (extensão Claude in
+    Chrome não conectada) — pendente confirmação do usuário digitando
+    no campo em `npm run dev`

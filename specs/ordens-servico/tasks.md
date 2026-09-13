@@ -81,3 +81,35 @@
 - [x] Nenhum item da checklist constitucional do design ficou pendente
 - [x] Nenhuma cor Tailwind literal introduzida fora dos tokens
       semânticos
+
+## Ajustes pendentes (rodada de specs 2026-09-13)
+
+- [x] **T009** — Remover `previsaoTermino` de `OrdemServicoApi`, `Form`
+      e do formulário (input + label) de criar/editar OS
+  - Coluna removida na API (`specs/specs/ordens-servico/` do
+    `connectasys_api`); campo some do modal e do documento impresso;
+    `npx tsc --noEmit` sem erro novo
+
+- [x] **T010** — Filtrar o `Select` de técnico responsável por
+      `role === "Mecânico"` (design 2.1)
+  - `UsuarioApi` ganhou `role`; `mecanicos = usuarios.filter(u =>
+    u.role === "Mecânico")`; lista vazia mostra item desabilitado
+
+- [x] **T011** — Checagem de conflito de agenda ao escolher técnico
+      (design 2.2), incluindo o `AlertDialog` de conflito com
+      "Cancelar"/"Alterar", e sincronização do Agendamento vinculado à
+      OS (criar/atualizar/remover conforme técnico e horário mudam)
+  - Testado ponta a ponta via curl replicando exatamente a sequência
+    que o front faz (POST OS → PUT OS → POST Agendamento vinculado →
+    PUT sem self-conflito → DELETE ao limpar técnico); dados de teste
+    removidos depois
+  - **Não verificado no navegador de verdade** (extensão Claude in
+    Chrome não conectada nesta sessão) — pendente confirmação visual
+    do usuário: abrir o modal de conflito, clicar "Alterar" e conferir
+    a navegação pra `/calendario`
+
+- [x] **T012** — Revisão de formatação da tela (espaçamento/hierarquia
+      visual do documento impresso, RNF-03) — seções com cabeçalho e
+      espaçamento no bloco `hidden print:block`; nota de orientação
+      sobre cabeçalho/rodapé do navegador abaixo do título da tela
+  - **Não verificado visualmente** — pendente confirmação do usuário

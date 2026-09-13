@@ -25,3 +25,21 @@
 
 **Status geral: implementação concluída, aguardando verificação manual
 no navegador pelo usuário.**
+
+## Fase 4 — Formatação (revisão 2026-09-13)
+
+- [x] Reorganizar o bloco `hidden print:block` em seções com
+      cabeçalhos (`<h2>` uppercase) e espaçamento/bordas (`design.md`
+      — "Formatação do documento"): cliente/veículo, diagnóstico/
+      solução, peças e totais, aprovação/assinatura
+  - **Não verificado visualmente** — pendente revisão do documento
+    impresso/pré-visualizado pelo usuário
+
+- [x] ~~Adicionar parágrafo orientando a desmarcar "Cabeçalhos e
+      rodapés"~~ — **revertido**: o usuário pediu explicitamente pra
+      tirar esse texto da tela, não quer nenhum aviso sobre isso na
+      interface (`design.md` — "Encaminhamento (revisado)")
+
+- [ ] Testar manualmente: revisar o documento impresso/pré-visualizado
+      com as seções novas — pendente, precisa de navegador real
+      (extensão Claude in Chrome não conectada nesta sessão)

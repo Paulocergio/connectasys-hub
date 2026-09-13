@@ -3,6 +3,11 @@
 **Pasta:** `specs/ordens-servico/` · **Spec:** `specs/ordens-servico/spec.md`
 **Status:** rascunho · **Fase seguinte:** `/tarefas ordens-servico`
 
+> **Revisão 2026-09-13:** remove `previsaoTermino` de `OrdemServicoApi`/
+> `Form`; `Select` de técnico filtra por `role === "Mecânico"`; ao
+> escolher técnico, dispara checagem de conflito de agenda (ver
+> `specs/calendario/design.md`) antes de permitir salvar.
+
 ## 1. Verificação Constitucional
 
 - [x] Usa apenas a stack do Artigo II — mesmo padrão de `_app.clientes.tsx`/`_app.veiculos.tsx`
@@ -74,7 +79,6 @@ type OrdemServicoApi = {
   diagnostico: string | null;
   solucao: string | null;
   dataAbertura: string;
-  previsaoTermino: string | null;
   dataConclusao: string | null;
   valorMaoDeObra: number;
   desconto: number;
@@ -100,7 +104,6 @@ type Form = {
   descricaoProblema: string;
   diagnostico: string;
   solucao: string;
-  previsaoTermino: string; // yyyy-mm-dd
   dataConclusao: string;
   valorMaoDeObra: string;
   desconto: string;
@@ -109,9 +112,50 @@ type Form = {
 };
 ```
 
+`previsaoTermino` removido de `OrdemServicoApi` e `Form` (RF-03 da
+spec, revisão 2026-09-13) — a coluna também some da API/banco, ver
+`specs/specs/ordens-servico/design.md` do `connectasys_api`.
+
 Não há mock — dado vem sempre da API. `clientes`/`veiculos`/`usuarios`
 são buscados como listas auxiliares pra Select e resolução de nome na
 tabela (mesmo padrão de `_app.veiculos.tsx` com `clientes`).
+
+### 2.1 Seletor de técnico filtrado por perfil (RF-08)
+
+```ts
+const mecanicos = usuarios.filter((u) => u.role === "Mecânico");
+```
+
+O `Select` de técnico passa a iterar `mecanicos` em vez de `usuarios`.
+Se `mecanicos` vier vazio (nenhum usuário com perfil Mecânico
+cadastrado), o `Select` mostra um item desabilitado ("Nenhum mecânico
+cadastrado"), mesmo padrão já usado pro `Select` de cliente vazio em
+Contas a Receber.
+
+### 2.2 Checagem de conflito de agenda ao escolher técnico (RF-09)
+
+Ao selecionar um `tecnicoId` no formulário (com uma data/hora de
+agendamento já definida — ver `specs/calendario/spec.md` pra onde essa
+data/hora é escolhida dentro do fluxo de OS), dispara:
+
+```ts
+const { data: conflito } = useQuery({
+  queryKey: ["calendario", "conflito", tecnicoId, dataHora],
+  queryFn: () => apiFetch<AgendamentoApi | null>(
+    `/api/Agendamentos/conflito?tecnicoId=${tecnicoId}&dataHora=${dataHora}`
+  ),
+  enabled: Boolean(tecnicoId && dataHora),
+});
+```
+
+Se `conflito` não for `null`, abre um `AlertDialog` com os detalhes do
+agendamento existente (cliente, veículo, horário) e duas ações:
+"Cancelar" (fecha o diálogo, mantém o formulário como estava) e
+"Alterar" (navega para `_app.calendario.tsx`, que é só leitura,
+levando o técnico e a data pré-filtrados — o usuário vê a agenda
+ocupada e volta pra este formulário pra digitar outro horário no campo
+já existente aqui). Detalhe completo do endpoint e do modelo de dados
+em `specs/calendario/`.
 
 ## 6. Dependências Novas
 
@@ -134,6 +178,12 @@ Nenhuma.
   `desconto`) seguem o mesmo padrão de texto controlado +
   `inputMode="decimal"` já usado em Contas a Pagar, convertidos pra
   `number` só ao montar o payload.
+- **Decisão (revisão 2026-09-13):** a checagem de conflito de agenda
+  (2.2) só roda quando o formulário já tem técnico **e** data/hora de
+  agendamento definidos — evita disparar a query a cada tecla digitada
+  no restante do formulário. Se o usuário trocar o técnico ou o
+  horário depois de já ter passado pela checagem, ela roda de novo
+  (chave da query inclui os dois valores).
 
 ## 8. Estratégia de Verificação
 

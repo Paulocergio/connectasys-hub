@@ -1,7 +1,14 @@
 # Especificação: Ordens de Serviço
 
 **Pasta:** `specs/ordens-servico/` · **Status:** rascunho
-**Data:** 2026-09-04 · **Fase seguinte:** `/planejar ordens-servico`
+**Data:** 2026-09-04 · **Última revisão:** 2026-09-13 · **Fase seguinte:** `/planejar ordens-servico`
+
+> **Revisão 2026-09-13** (rodada de ajustes pedida pelo usuário — ver
+> `specs/calendario/` para a feature nova de agenda): remove-se o campo
+> "Previsão de término"; o seletor de técnico responsável passa a
+> listar só usuários com perfil Mecânico; escolher um técnico passa a
+> checar o calendário dele antes de salvar; a tela ganha uma revisão
+> de formatação. Detalhes de cada mudança nas seções abaixo.
 
 > Backend (`connectasys_api`) já tem o CRUD completo de Ordens de
 > Serviço, incluindo itens (peças/materiais) e cálculo de valor total
@@ -32,8 +39,8 @@ tela de Ordens de Serviço, vinculando as duas.
 
 ### Cenário 3: Editar uma OS (diagnóstico, status, valores)
 - **Dado** uma OS existente
-- **Quando** o usuário atualiza diagnóstico, solução, status,
-  previsão/conclusão, mão de obra ou desconto
+- **Quando** o usuário atualiza diagnóstico, solução, status, data de
+  conclusão, mão de obra ou desconto
 - **Então** a lista e a tela de detalhe refletem a mudança
 
 ### Cenário 4: Adicionar/remover peças usadas
@@ -66,6 +73,24 @@ tela de Ordens de Serviço, vinculando as duas.
 - **Então** o usuário vê uma mensagem legível (toast), sem tela
   quebrada
 
+### Cenário 9: Seletor de técnico responsável só lista mecânicos
+- **Dado** o formulário de criar/editar OS
+- **Quando** o usuário abre o seletor de "Técnico responsável"
+- **Então** só aparecem usuários cujo perfil é Mecânico — usuários com
+  outros perfis (Admin, Recepcionista, Financeiro) não aparecem na
+  lista
+
+### Cenário 10: Conflito de agenda ao escolher o técnico
+- **Dado** o formulário de criar/editar OS, com um cliente/veículo já
+  informados
+- **Quando** o usuário escolhe um técnico (Mecânico) que já tem um
+  agendamento marcado no mesmo dia e horário (ver `specs/calendario/`)
+- **Então** um modal informa o conflito, mostra os detalhes do
+  agendamento existente, e oferece "Cancelar" (fecha o modal, mantém o
+  técnico e o horário como estavam) ou "Alterar" (leva o usuário pra
+  tela de Calendário, só de consulta, pra ver a agenda ocupada daquele
+  técnico antes de voltar e escolher outro horário aqui no formulário)
+
 ## 3. Requisitos Funcionais
 
 - **RF-01:** Listar OS com cliente, veículo, status, data de abertura
@@ -74,20 +99,33 @@ tela de Ordens de Serviço, vinculando as duas.
   daquele cliente (a lista de veículos filtra pelo cliente
   escolhido), com descrição do problema.
 - **RF-03:** Editar uma OS: status (lista fixa: Aberto, Em Andamento,
-  Aguardando Peça, Concluído, Cancelado), diagnóstico, solução,
-  previsão de término, data de conclusão, mão de obra, desconto,
-  técnico responsável (opcional), aprovação do cliente (nome + data).
+  Aguardando Peça, Concluído, Cancelado), diagnóstico, solução, data
+  de conclusão, mão de obra, desconto, técnico responsável (opcional),
+  aprovação do cliente (nome + data). O campo "Previsão de término"
+  foi removido (não existe mais na API nem na tabela do banco — ver
+  `specs/specs/ordens-servico/` do `connectasys_api`).
 - **RF-04:** Adicionar e remover itens (peças), tanto ao criar quanto
   ao editar uma OS; o valor total exibido reflete a soma na hora.
 - **RF-05:** Remover uma OS, com confirmação.
 - **RF-06:** Buscar/filtrar a lista por cliente, veículo ou status.
 - **RF-07:** Entrada própria no menu lateral.
+- **RF-08:** O seletor de "Técnico responsável" só lista usuários com
+  perfil Mecânico (Cenário 9).
+- **RF-09:** Ao escolher um técnico no formulário, o sistema verifica
+  se ele já tem um agendamento no mesmo dia/horário selecionado; se
+  tiver, mostra o modal de conflito descrito no Cenário 10, em vez de
+  permitir salvar direto (regra completa em `specs/calendario/`).
 
 ## 4. Requisitos Não Funcionais
 
 - **RNF-01:** Enquanto uma chamada à API está em andamento, a
   interface indica carregamento e evita duplo envio.
 - **RNF-02:** Valores monetários exibidos em reais (R$ 1.234,56).
+- **RNF-03:** A tela segue uma hierarquia visual mais clara (espaçamento
+  e agrupamento de seções no formulário/detalhe da OS) — pedido do
+  usuário ("deixar a tela mais formatada"); o documento impresso de
+  uma OS salva tem sua própria spec em `specs/impressao-os/`, incluindo
+  a remoção de cabeçalho/rodapé indesejados na impressão.
 
 ## 5. Fora de Escopo
 
@@ -109,6 +147,19 @@ tela de Ordens de Serviço, vinculando as duas.
   não é obrigatório.
 - Suposição: a rota da tela é `_app.ordens-servico.tsx`, seguindo o
   padrão já usado.
+- **Pergunta em aberto (Cenário 9):** o filtro por perfil Mecânico é
+  feito no front (lista completa de `/api/Usuarios`, filtrada por
+  `role === "Mecânico"`) ou a API passa a expor um filtro próprio
+  (`/api/Usuarios?role=Mecânico`)? Assumido o filtro no front por
+  simplicidade — a API já fecha `Role` num conjunto de 4 valores
+  fixos (`specs/perfis-usuario` do `connectasys_api`), então não há
+  risco de valor inesperado; confirmar se o volume de usuários algum
+  dia justifica mover o filtro pro servidor.
+- **Pergunta em aberto (Cenário 10):** a verificação de conflito de
+  agenda depende do endpoint de checagem definido em
+  `specs/calendario/spec.md`. Este documento assume que a OS não fica
+  bloqueada de ser salva sem técnico (campo continua opcional); o
+  conflito só é checado quando um técnico é de fato escolhido.
 
 ## Checklist de Qualidade da Spec
 

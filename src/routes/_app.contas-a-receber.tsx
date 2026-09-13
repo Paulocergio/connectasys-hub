@@ -93,6 +93,24 @@ function formatarData(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
+// Formata um número como "1.234,56".
+function formatarNumero(valor: number) {
+  return valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Máscara de dinheiro: digita só números, os 2 últimos dígitos viram
+// centavos — igual caixa eletrônico. Sempre "0,00" pra cima.
+function mascaraMoeda(valorDigitado: string) {
+  const digitos = valorDigitado.replace(/\D/g, "");
+  const numero = Number(digitos || "0") / 100;
+  return formatarNumero(numero);
+}
+
+// Desfaz a formatação "1.234,56" pra virar 1234.56 (number).
+function paraNumero(valorFormatado: string) {
+  return Number(valorFormatado.replace(/\./g, "").replace(",", ".")) || 0;
+}
+
 function ContasAReceberPage() {
   const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
@@ -144,7 +162,7 @@ function ContasAReceberPage() {
         body: JSON.stringify({
           clienteId: Number(dados.clienteId),
           descricao: dados.descricao,
-          valor: Number(dados.valor.replace(",", ".")),
+          valor: paraNumero(dados.valor),
           dataVencimento: dados.dataVencimento,
         }),
       }),
@@ -164,7 +182,7 @@ function ContasAReceberPage() {
           id,
           clienteId: Number(dados.clienteId),
           descricao: dados.descricao,
-          valor: Number(dados.valor.replace(",", ".")),
+          valor: paraNumero(dados.valor),
           dataVencimento: dados.dataVencimento,
           dataRecebimento: dados.dataRecebimento || null,
           formaPagamento: dados.dataRecebimento ? dados.formaPagamento : null,
@@ -199,7 +217,7 @@ function ContasAReceberPage() {
     setForm({
       clienteId: String(c.clienteId),
       descricao: c.descricao,
-      valor: String(c.valor),
+      valor: formatarNumero(c.valor),
       dataVencimento: c.dataVencimento.slice(0, 10),
       dataRecebimento: c.dataRecebimento ? c.dataRecebimento.slice(0, 10) : "",
       formaPagamento: c.formaPagamento ?? "",
@@ -213,7 +231,7 @@ function ContasAReceberPage() {
       toast.error("Selecione um cliente.");
       return;
     }
-    if (!(Number(form.valor.replace(",", ".")) > 0)) {
+    if (!(paraNumero(form.valor) > 0)) {
       toast.error("Informe um valor maior que zero.");
       return;
     }
@@ -407,7 +425,7 @@ function ContasAReceberPage() {
                   inputMode="decimal"
                   placeholder="0,00"
                   value={form.valor}
-                  onChange={(e) => setForm({ ...form, valor: e.target.value })}
+                  onChange={(e) => setForm({ ...form, valor: mascaraMoeda(e.target.value) })}
                 />
               </div>
               <div className="space-y-2">

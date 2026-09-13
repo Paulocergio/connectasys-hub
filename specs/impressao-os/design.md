@@ -43,3 +43,35 @@ cliente.
   afetados: só renderizam quando `open=true`, e a impressão é
   disparada a partir da linha da tabela, não de dentro de um diálogo
   aberto.
+
+## Revisão 2026-09-13 — formatação e cabeçalho/rodapé do navegador
+
+### Formatação do documento
+
+O bloco `hidden print:block` ganha seções com `<h2>`/`<h3>` e
+espaçamento (`space-y-*`, bordas leves `border-border` entre seções)
+em vez de campos soltos: (1) cabeçalho da OS (número, status, data de
+abertura), (2) cliente/veículo, (3) diagnóstico/solução, (4) tabela de
+itens, (5) totais (mão de obra, desconto, valor total), (6) aprovação/
+assinatura. Mesmos tokens semânticos do Artigo V (o bloco já roda sob
+o override de tema claro do `@media print` existente).
+
+### Cabeçalho/rodapé do navegador — não é resolvível via CSS
+
+Testado: `@page { margin: ... }` controla só a margem do **conteúdo**
+da página impressa, não o cabeçalho/rodapé que o Chrome desenha por
+cima dele — esse texto (data/hora + título da aba no topo, URL +
+paginação no rodapé) é renderizado pelo processo do navegador, fora do
+DOM da página, especificamente pra não poder ser manipulado por
+JavaScript/CSS de terceiros (mesma razão pela qual sites não conseguem
+forjar o que aparece ali). Não existe workaround client-side
+confiável e multi-navegador pra isso.
+
+**Encaminhamento (revisado):** a primeira versão adicionava um
+parágrafo de orientação na tela sobre desmarcar "Cabeçalhos e
+rodapés" — o usuário pediu explicitamente pra remover, não quer esse
+tipo de aviso na interface. Removido por completo. Fica só como
+limitação conhecida documentada aqui e no `spec.md`, sem nenhuma UI
+tentando contornar ou explicar — se o usuário quiser um documento sem
+esse cabeçalho/rodapé, a única forma continua sendo desmarcar a opção
+manualmente no diálogo do navegador (fora do controle do sistema).

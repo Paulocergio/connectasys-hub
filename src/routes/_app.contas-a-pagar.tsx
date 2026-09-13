@@ -85,6 +85,24 @@ function formatarData(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
+// Formata um número como "1.234,56".
+function formatarNumero(valor: number) {
+  return valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Máscara de dinheiro: digita só números, os 2 últimos dígitos viram
+// centavos — igual caixa eletrônico. Sempre "0,00" pra cima.
+function mascaraMoeda(valorDigitado: string) {
+  const digitos = valorDigitado.replace(/\D/g, "");
+  const numero = Number(digitos || "0") / 100;
+  return formatarNumero(numero);
+}
+
+// Desfaz a formatação "1.234,56" pra virar 1234.56 (number).
+function paraNumero(valorFormatado: string) {
+  return Number(valorFormatado.replace(/\./g, "").replace(",", ".")) || 0;
+}
+
 function ContasAPagarPage() {
   const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
@@ -111,7 +129,7 @@ function ContasAPagarPage() {
         body: JSON.stringify({
           descricao: dados.descricao,
           fornecedor: dados.fornecedor,
-          valor: Number(dados.valor.replace(",", ".")),
+          valor: paraNumero(dados.valor),
           dataVencimento: dados.dataVencimento,
         }),
       }),
@@ -131,7 +149,7 @@ function ContasAPagarPage() {
           id,
           descricao: dados.descricao,
           fornecedor: dados.fornecedor,
-          valor: Number(dados.valor.replace(",", ".")),
+          valor: paraNumero(dados.valor),
           dataVencimento: dados.dataVencimento,
           dataPagamento: dados.dataPagamento || null,
           formaPagamento: dados.dataPagamento ? dados.formaPagamento : null,
@@ -174,7 +192,7 @@ function ContasAPagarPage() {
     setForm({
       descricao: c.descricao,
       fornecedor: c.fornecedor,
-      valor: String(c.valor),
+      valor: formatarNumero(c.valor),
       dataVencimento: c.dataVencimento.slice(0, 10),
       dataPagamento: c.dataPagamento ? c.dataPagamento.slice(0, 10) : "",
       formaPagamento: c.formaPagamento ?? "",
@@ -332,7 +350,7 @@ function ContasAPagarPage() {
                   inputMode="decimal"
                   placeholder="0,00"
                   value={form.valor}
-                  onChange={(e) => setForm({ ...form, valor: e.target.value })}
+                  onChange={(e) => setForm({ ...form, valor: mascaraMoeda(e.target.value) })}
                 />
               </div>
             </div>

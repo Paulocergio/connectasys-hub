@@ -99,3 +99,12 @@
 - [ ] Todos os cenários da spec (`spec.md`) testados manualmente em `npm run dev`
 - [ ] Nenhum item da checklist constitucional do design ficou pendente
 - [ ] Nenhuma cor Tailwind literal (`orange-500` etc.) foi introduzida fora dos tokens semânticos
+
+## Ajustes pendentes (rodada de specs 2026-09-13)
+
+- [x] **T007** — Aplicar máscara de dinheiro em tempo real no campo
+      "Valor" (cadastrar e editar), mesmo mecanismo de Contas a Pagar
+  - `mascaraMoeda`/`formatarNumero`/`paraNumero` adicionados; `npx tsc
+    --noEmit` e `npx eslint` sem erro novo
+  - **Não verificado visualmente no navegador** — pendente confirmação
+    do usuário

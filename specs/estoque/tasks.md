@@ -43,3 +43,24 @@ manual no navegador pelo usuário.**
       (`nome`/`precoVenda`), Select e preenchimento automático usando
       os campos novos
 - [x] `npx tsc --noEmit` e `npm run build` sem erros
+
+## Fase 5 — Remover Estoque Mínimo, dividir Margem (revisão 2026-09-13)
+
+- [x] Remover `estoqueMinimo` de `EstoqueApi`, `Form`, formulário
+      (input) e coluna/badge "Estoque baixo" da tabela
+  - Coluna removida na API (`specs/specs/estoque/` do
+    `connectasys_api`); `npx tsc --noEmit` sem erro novo
+
+- [x] Substituir a coluna única "Margem" por duas colunas — "Margem de
+      Venda" e "Margem de Markup" — calculadas conforme `design.md` §4.1
+  - `calcularMargemMarkup`/`calcularMargemVenda` implementadas; as
+    duas colunas aparecem lado a lado na tabela
+
+- [x] Formulário: campo de edição da margem passa a ser "Margem de
+      Markup (%)" (recalcula preço de venda, que por sua vez recalcula
+      a Margem de Venda exibida, mostrada como campo somente leitura)
+  - `onMargemMarkupChange` atualiza preço de venda sem alterar o preço
+    de compra; `npx eslint` sem erro novo
+  - **Não verificado visualmente no navegador** (extensão Claude in
+    Chrome não conectada nesta sessão) — pendente confirmação do
+    usuário em `npm run dev`

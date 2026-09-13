@@ -3,12 +3,11 @@ import { getSessao } from "@/lib/connecta-store";
 import { podeAcessar } from "@/lib/permissoes";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Search, Package, TriangleAlert } from "@/components/icons";
+import { Plus, Pencil, Trash2, Search, Package } from "@/components/icons";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -44,7 +43,6 @@ type EstoqueApi = {
   quantidade: number;
   precoCompra: number;
   precoVenda: number;
-  estoqueMinimo: number;
   dataCadastro: string;
 };
 
@@ -54,8 +52,7 @@ type Form = {
   quantidade: string;
   precoCompra: string;
   precoVenda: string;
-  margem: string;
-  estoqueMinimo: string;
+  margemMarkup: string;
 };
 
 const vazio: Form = {
@@ -64,8 +61,7 @@ const vazio: Form = {
   quantidade: "",
   precoCompra: "",
   precoVenda: "",
-  margem: "",
-  estoqueMinimo: "",
+  margemMarkup: "",
 };
 
 function formatarMoeda(valor: number) {
@@ -80,14 +76,16 @@ function formatarPercentual(valor: number) {
   return valor.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
-// Margem de lucro: quanto o preço de venda é maior que o preço de compra, em %.
-function calcularMargem(precoCompra: number, precoVenda: number) {
+// Margem de Markup: lucro como percentual sobre o preço de COMPRA (custo).
+function calcularMargemMarkup(precoCompra: number, precoVenda: number) {
   if (precoCompra <= 0) return 0;
   return ((precoVenda - precoCompra) / precoCompra) * 100;
 }
 
-function estoqueBaixo(e: EstoqueApi) {
-  return e.quantidade <= e.estoqueMinimo;
+// Margem de Venda: lucro como percentual sobre o preço de VENDA.
+function calcularMargemVenda(precoCompra: number, precoVenda: number) {
+  if (precoVenda <= 0) return 0;
+  return ((precoVenda - precoCompra) / precoVenda) * 100;
 }
 
 function EstoquePage() {
@@ -116,7 +114,6 @@ function EstoquePage() {
       quantidade: paraNumero(dados.quantidade),
       precoCompra: paraNumero(dados.precoCompra),
       precoVenda: paraNumero(dados.precoVenda),
-      estoqueMinimo: paraNumero(dados.estoqueMinimo),
     };
   }
 
@@ -175,28 +172,28 @@ function EstoquePage() {
       quantidade: String(e.quantidade),
       precoCompra: String(e.precoCompra),
       precoVenda: String(e.precoVenda),
-      margem: formatarPercentual(calcularMargem(e.precoCompra, e.precoVenda)),
-      estoqueMinimo: String(e.estoqueMinimo),
+      margemMarkup: formatarPercentual(calcularMargemMarkup(e.precoCompra, e.precoVenda)),
     });
     setAberto(true);
   }
 
-  // Preço de compra ou de venda mudou: recalcula a margem exibida.
+  // Preço de compra ou de venda mudou: recalcula a Margem de Markup exibida.
   function onPrecoChange(campo: "precoCompra" | "precoVenda", valor: string) {
     const novoForm = { ...form, [campo]: valor };
     const compra = paraNumero(novoForm.precoCompra);
     const venda = paraNumero(novoForm.precoVenda);
-    novoForm.margem = formatarPercentual(calcularMargem(compra, venda));
+    novoForm.margemMarkup = formatarPercentual(calcularMargemMarkup(compra, venda));
     setForm(novoForm);
   }
 
-  // Margem editada manualmente: recalcula o preço de venda a partir do preço de compra.
-  function onMargemChange(valor: string) {
+  // Margem de Markup editada manualmente: recalcula o preço de venda a
+  // partir do preço de compra (que fica fixo).
+  function onMargemMarkupChange(valor: string) {
     const compra = paraNumero(form.precoCompra);
     const margem = paraNumero(valor);
     const novoPrecoVenda =
       compra > 0 ? (compra * (1 + margem / 100)).toFixed(2).replace(".", ",") : form.precoVenda;
-    setForm({ ...form, margem: valor, precoVenda: novoPrecoVenda });
+    setForm({ ...form, margemMarkup: valor, precoVenda: novoPrecoVenda });
   }
 
   function salvar(e: React.FormEvent) {
@@ -242,21 +239,22 @@ function EstoquePage() {
               <th className="px-5 py-3 font-medium">Quantidade</th>
               <th className="px-5 py-3 font-medium">Preço de compra</th>
               <th className="px-5 py-3 font-medium">Preço de venda</th>
-              <th className="px-5 py-3 font-medium">Margem</th>
+              <th className="px-5 py-3 font-medium">Margem de Venda</th>
+              <th className="px-5 py-3 font-medium">Margem de Markup</th>
               <th className="px-5 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-border/60">
             {isLoading && (
               <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-muted-foreground">
+                <td colSpan={7} className="px-5 py-10 text-center text-muted-foreground">
                   Carregando estoque...
                 </td>
               </tr>
             )}
             {isError && (
               <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-destructive">
+                <td colSpan={7} className="px-5 py-10 text-center text-destructive">
                   Não foi possível carregar o estoque. Confira se a API está no ar.
                 </td>
               </tr>
@@ -271,25 +269,16 @@ function EstoquePage() {
                       <div className="text-xs text-muted-foreground">{e.descricao}</div>
                     )}
                   </td>
-                  <td className="px-5 py-3 text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      {e.quantidade}
-                      {estoqueBaixo(e) && (
-                        <Badge
-                          variant="destructive"
-                          className="gap-1 rounded-full text-[10px] font-medium"
-                        >
-                          <TriangleAlert className="h-3 w-3" /> Estoque baixo
-                        </Badge>
-                      )}
-                    </div>
-                  </td>
+                  <td className="px-5 py-3 text-muted-foreground">{e.quantidade}</td>
                   <td className="px-5 py-3 text-muted-foreground">
                     {formatarMoeda(e.precoCompra)}
                   </td>
                   <td className="px-5 py-3 text-muted-foreground">{formatarMoeda(e.precoVenda)}</td>
                   <td className="px-5 py-3 text-muted-foreground">
-                    {formatarPercentual(calcularMargem(e.precoCompra, e.precoVenda))}%
+                    {formatarPercentual(calcularMargemVenda(e.precoCompra, e.precoVenda))}%
+                  </td>
+                  <td className="px-5 py-3 text-muted-foreground">
+                    {formatarPercentual(calcularMargemMarkup(e.precoCompra, e.precoVenda))}%
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex justify-end gap-1">
@@ -305,7 +294,7 @@ function EstoquePage() {
               ))}
             {!isLoading && !isError && lista.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-muted-foreground">
+                <td colSpan={7} className="px-5 py-10 text-center text-muted-foreground">
                   Nenhuma peça encontrada.
                 </td>
               </tr>
@@ -351,30 +340,18 @@ function EstoquePage() {
                 />
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="es-quantidade">Quantidade</Label>
-                <Input
-                  id="es-quantidade"
-                  required
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={form.quantidade}
-                  onChange={(e) => setForm({ ...form, quantidade: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="es-minimo">Estoque mínimo</Label>
-                <Input
-                  id="es-minimo"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={form.estoqueMinimo}
-                  onChange={(e) => setForm({ ...form, estoqueMinimo: e.target.value })}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="es-quantidade">Quantidade</Label>
+              <Input
+                id="es-quantidade"
+                required
+                inputMode="decimal"
+                placeholder="0"
+                value={form.quantidade}
+                onChange={(e) => setForm({ ...form, quantidade: e.target.value })}
+              />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="es-compra">Preço de compra</Label>
                 <Input
@@ -397,14 +374,26 @@ function EstoquePage() {
                   onChange={(e) => onPrecoChange("precoVenda", e.target.value)}
                 />
               </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="es-margem">Margem (%)</Label>
+                <Label htmlFor="es-margem-markup">Margem de Markup (%)</Label>
                 <Input
-                  id="es-margem"
+                  id="es-margem-markup"
                   inputMode="decimal"
                   placeholder="0,0"
-                  value={form.margem}
-                  onChange={(e) => onMargemChange(e.target.value)}
+                  value={form.margemMarkup}
+                  onChange={(e) => onMargemMarkupChange(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="es-margem-venda">Margem de Venda (%)</Label>
+                <Input
+                  id="es-margem-venda"
+                  disabled
+                  value={formatarPercentual(
+                    calcularMargemVenda(paraNumero(form.precoCompra), paraNumero(form.precoVenda)),
+                  )}
                 />
               </div>
             </div>

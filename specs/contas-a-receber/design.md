@@ -88,11 +88,13 @@ Nenhuma.
 
 ## 7. Riscos e Decisões
 
-- **Decisão:** `Valor` segue exatamente o mesmo mecanismo de Contas a
-  Pagar — `type="text"` com `inputMode="decimal"`, convertido pra
-  `number` só ao montar o payload; exibição via
+- **Decisão (revisão 2026-09-13):** `Valor` segue exatamente o mesmo
+  mecanismo de Contas a Pagar (`design.md` §7 daquela feature) —
+  `type="text"` com `inputMode="decimal"`, com máscara de dinheiro
+  (`formatarMascaraDinheiro`) aplicada em tempo real no `onChange`,
+  convertido pra `number` só ao montar o payload; exibição via
   `Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })`
-  (RNF-02, já resolvido naquela feature, reaproveitado aqui).
+  (RNF-03, reaproveitado daquela feature).
 - **Decisão:** `DataRecebimento` no formulário usa `<input type="date">`
   vazio = não recebida; string vazia vira `null` no payload de `PUT`,
   mesmo padrão de `DataPagamento` em Contas a Pagar.

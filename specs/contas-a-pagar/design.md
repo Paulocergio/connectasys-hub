@@ -73,8 +73,30 @@ Nenhuma.
 
 ## 7. Riscos e Decisões
 
-- **Decisão:** `Valor` é editado como texto no formulário (`type="text"`
-  com `inputMode="decimal"`), convertido para `number` só no momento de
+- **Decisão (revisão 2026-09-13, substitui a decisão original abaixo):**
+  `Valor` continua sendo um `<input type="text" inputMode="decimal">`
+  controlado (não `type="number"` nativo — ver Suposições da spec,
+  RNF-03), mas passa a aplicar **máscara de dinheiro em tempo real**
+  enquanto o usuário digita, em vez de texto livre validado só no
+  submit:
+  ```ts
+  function formatarMascaraDinheiro(valorDigitado: string): string {
+    const digitos = valorDigitado.replace(/\D/g, ""); // só dígitos
+    const centavos = (Number(digitos) / 100).toFixed(2);
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(Number(centavos));
+  }
+  ```
+  `onChange` roda o texto digitado por essa função e grava o resultado
+  formatado (`"R$ 1.234,56"`) direto no estado do form; ao montar o
+  payload, `paraNumero(valor)` (já existente) desfaz a máscara pra
+  `number`. Mesmo padrão reaproveitado em Contas a Receber e no campo
+  "Valor" de item/mão de obra de Ordens de Serviço.
+- **Decisão original (2026-09-03, mantida como contexto):** `Valor` é
+  editado como texto no formulário (`type="text"` com
+  `inputMode="decimal"`), convertido para `number` só no momento de
   montar o payload — evita os problemas de UX do `<input type="number">`
   nativo com vírgula decimal em pt-BR. Formatação de exibição na tabela
   usa `Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })`.

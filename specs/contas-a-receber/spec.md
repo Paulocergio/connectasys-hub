@@ -1,7 +1,7 @@
 # Especificação: Contas a Receber
 
 **Pasta:** `specs/contas-a-receber/` · **Status:** rascunho
-**Data:** 2026-09-03 · **Fase seguinte:** `/planejar contas-a-receber`
+**Data:** 2026-09-03 · **Última revisão:** 2026-09-13 · **Fase seguinte:** `/planejar contas-a-receber`
 
 > Segunda parte do módulo Financeiro migrada do mock pra API real
 > (Artigo I). O backend (`connectasys_api`) já tem o CRUD completo e
@@ -90,6 +90,12 @@ consumindo a API real já pronta.
   remover), a interface indica carregamento e evita duplo envio.
 - **RNF-02:** Valores monetários são exibidos formatados em reais
   (R$ 1.234,56).
+- **RNF-03 (revisão 2026-09-13):** O campo "Valor" do formulário
+  (cadastrar e editar) só aceita números, com máscara de dinheiro
+  aplicada enquanto o usuário digita — mesmo requisito e mesma
+  ressalva técnica de `specs/contas-a-pagar/spec.md` (RNF-03): o
+  `<input type="number">` nativo não suporta a máscara pt-BR, resolvido
+  com input de texto restrito a dígitos.
 
 ## 5. Fora de Escopo
 

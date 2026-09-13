@@ -1,7 +1,7 @@
 # Especificação: Contas a Pagar
 
 **Pasta:** `specs/contas-a-pagar/` · **Status:** rascunho
-**Data:** 2026-09-03 · **Fase seguinte:** `/planejar contas-a-pagar`
+**Data:** 2026-09-03 · **Última revisão:** 2026-09-13 · **Fase seguinte:** `/planejar contas-a-pagar`
 
 > Primeira parte do módulo Financeiro migrada do mock pra API real
 > (Artigo I). O backend (`connectasys_api`) já tem o CRUD completo e
@@ -76,6 +76,14 @@ cria a tela de Contas a Pagar, consumindo a API real já pronta.
   remover), a interface indica carregamento e evita duplo envio.
 - **RNF-02:** Valores monetários são exibidos formatados em reais
   (R$ 1.234,56).
+- **RNF-03 (revisão 2026-09-13):** O campo "Valor" do formulário
+  (cadastrar e editar) só aceita números, com máscara de dinheiro
+  aplicada enquanto o usuário digita — mesmo requisito valendo pra
+  Contas a Receber (`specs/contas-a-receber/`) e pra Ordens de Serviço.
+  Ver `design.md` para a decisão técnica (o `<input type="number">`
+  nativo não suporta máscara com separador de milhar/decimal em
+  pt-BR — resolvido com input de texto restrito a dígitos, ver
+  Suposições).
 
 ## 5. Fora de Escopo
 
@@ -96,6 +104,20 @@ cria a tela de Contas a Pagar, consumindo a API real já pronta.
 - Suposição: a rota da tela segue o padrão já usado
   (`_app.contas-a-pagar.tsx`), consistente com `_app.usuarios.tsx` e
   `_app.dashboard.tsx`.
+- **Pergunta em aberto (RNF-03):** o pedido original diz "campo do
+  tipo number" — literalmente, isso é o atributo HTML
+  `<input type="number">`, mas esse elemento não permite exibir máscara
+  de milhar/decimal (`1.234,56`) enquanto digita; navegadores tratam o
+  valor sempre em formato `1234.56` (ponto, sem separador de milhar) e
+  bloqueiam caracteres não numéricos, inclusive a vírgula decimal
+  pt-BR. Este documento assume que a intenção é **"só aceitar
+  números"** (o resultado que o usuário quer), não o atributo HTML
+  literal — resolvido com input de texto (`inputMode="decimal"`)
+  restrito a dígitos/vírgula/ponto via `onChange`, com a máscara de
+  dinheiro formatando o valor a cada tecla (revisando a decisão
+  anterior desta spec, que usava texto livre sem máscara em tempo
+  real). Se a intenção for mesmo o atributo `number` nativo sem
+  máscara, avisar pra eu ajustar.
 
 ## Checklist de Qualidade da Spec
 

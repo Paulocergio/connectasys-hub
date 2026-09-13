@@ -3,6 +3,11 @@
 **Pasta:** `specs/estoque/` · **Spec:** `specs/estoque/spec.md`
 **Status:** rascunho · **Fase seguinte:** `/tarefas estoque`
 
+> **Revisão 2026-09-13:** `estoqueMinimo` sai de `EstoqueApi`/`Form` e
+> da tabela (junto com o badge "Estoque baixo"); `margem` (calculado,
+> não persistido) vira dois valores — `margemVenda` e `margemMarkup` —
+> ver §4.1.
+
 ## 1. Verificação Constitucional
 
 - [x] Usa apenas a stack já em uso (TanStack Router, React 19,
@@ -33,26 +38,61 @@ Duas partes:
 ## 4. `_app.estoque.tsx`
 
 Mesmo padrão de `_app.contas-a-pagar.tsx`, sem campos de status (peça
-de estoque não tem status).
+de estoque não tem status). Campos atuais (pós Fase 4 do `tasks.md`,
+revisão 2026-09-13 remove `estoqueMinimo`):
 
 ```ts
 type EstoqueApi = {
   id: number;
-  descricao: string;
+  nome: string;
+  descricao: string | null;
   quantidade: number;
-  valorUnitario: number;
+  precoCompra: number;
+  precoVenda: number;
   dataCadastro: string;
 };
 
 type Form = {
+  nome: string;
   descricao: string;
   quantidade: string; // texto controlado, convertido pra number ao enviar
-  valorUnitario: string; // mesma máscara de dinheiro já usada em Contas a Pagar/Receber/OS
+  precoCompra: string; // máscara de dinheiro (design contas-a-pagar §7)
+  precoVenda: string; // máscara de dinheiro; recalculado se o usuário editar a Margem de Markup (§5.1)
 };
 ```
 
+`margemVenda` e `margemMarkup` **não** entram em `EstoqueApi` nem em
+`Form` — são calculados só na UI a partir de `precoCompra`/`precoVenda`
+(§4.1), mesma decisão já em vigor pra margem antes desta revisão.
+`estoqueMinimo` removido de `EstoqueApi`/`Form`/tabela (RF-10 da spec,
+retirado). Coluna também sai do banco — ver `specs/specs/estoque/` do
+`connectasys_api`.
+
 Ícone do menu: `Package` (lucide-react, ainda não usado no projeto,
 mas já faz parte da lib já instalada — sem dependência nova).
+
+### 4.1 Margem de Venda e Margem de Markup
+
+```ts
+function calcularMargens(precoCompra: number, precoVenda: number) {
+  const margemMarkup = precoCompra > 0
+    ? ((precoVenda - precoCompra) / precoCompra) * 100
+    : 0;
+  const margemVenda = precoVenda > 0
+    ? ((precoVenda - precoCompra) / precoVenda) * 100
+    : 0;
+  return { margemMarkup, margemVenda };
+}
+```
+
+Edição bidirecional (Cenário 2a): o formulário ganha um campo "Margem
+de Markup (%)" — editar esse campo recalcula `precoVenda` a partir de
+`precoCompra` (`precoVenda = precoCompra * (1 + margemMarkup / 100)`),
+que por sua vez recalcula `margemVenda` exibida. Editar `precoVenda`
+diretamente recalcula as duas margens exibidas, sem tocar
+`precoCompra`. A tabela mostra as duas colunas lado a lado ("Margem de
+Venda" e "Margem de Markup"), ambas formatadas como percentual
+(`12,3%`).
 
 ## 5. `_app.ordens-servico.tsx` — seletor de peça do estoque
 

@@ -1,7 +1,12 @@
 # Especificação: Estoque
 
 **Pasta:** `specs/estoque/` · **Status:** aprovado
-**Data:** 2026-09-05 · **Fase seguinte:** `/planejar estoque`
+**Data:** 2026-09-05 · **Última revisão:** 2026-09-13 · **Fase seguinte:** `/planejar estoque`
+
+> **Revisão 2026-09-13** (pedido do usuário): remove-se o campo
+> "Estoque Mínimo" (e o aviso visual de estoque baixo que dependia
+> dele); o campo "Margem" passa a mostrar duas margens — Margem de
+> Venda e Margem de Markup — em vez de uma só. Ver seções abaixo.
 
 > Lado do hub para a feature descrita em `specs/estoque/spec.md` do
 > repositório `connectasys_api`: CRUD de peças/materiais em estoque, e
@@ -27,27 +32,23 @@ quantidade disponível é debitada.
 - **Dado** um usuário autenticado na tela de Estoque
 - **Quando** a tela carrega
 - **Então** ele vê a lista de peças (nome, quantidade disponível,
-  preço de compra, preço de venda e margem de lucro), vinda da API
-
-### Cenário 1a: Peça com estoque baixo
-- **Dado** uma peça cuja quantidade disponível está no ou abaixo do
-  estoque mínimo cadastrado pra ela
-- **Quando** o usuário olha a lista de Estoque
-- **Então** essa peça mostra um aviso visual de estoque baixo
+  preço de compra, preço de venda, Margem de Venda e Margem de
+  Markup), vinda da API
 
 ### Cenário 2: Cadastrar peça no estoque
 - **Dado** um usuário preenchendo o formulário "Nova peça"
 - **Quando** ele informa nome, quantidade, preço de compra e preço de
   venda, e salva
-- **Então** a peça é criada na API e aparece na lista, com a margem de
-  lucro calculada automaticamente
+- **Então** a peça é criada na API e aparece na lista, com a Margem de
+  Venda e a Margem de Markup calculadas automaticamente
 
 ### Cenário 2a: Editar a margem em vez do preço de venda
 - **Dado** o formulário de peça, com preço de compra já preenchido
-- **Quando** o usuário digita a margem de lucro desejada (%) em vez de
+- **Quando** o usuário digita a Margem de Markup desejada (%) em vez de
   editar o preço de venda diretamente
-- **Então** o preço de venda é recalculado automaticamente a partir do
-  preço de compra e da margem informada
+- **Então** o preço de venda (e, junto, a Margem de Venda exibida) são
+  recalculados automaticamente a partir do preço de compra e da Margem
+  de Markup informada (ver design.md para as duas fórmulas)
 
 ### Cenário 3: Editar peça do estoque
 - **Dado** uma peça existente
@@ -100,17 +101,21 @@ quantidade disponível é debitada.
 
 - **RF-01:** A tela de Estoque deve listar as peças vindas da API
   real, mostrando nome, quantidade disponível, preço de compra, preço
-  de venda e margem de lucro (%).
+  de venda, Margem de Venda (%) e Margem de Markup (%).
 - **RF-02:** O usuário deve poder cadastrar, editar e remover peças do
   estoque, com confirmação antes de remover.
 - **RF-03:** O usuário deve poder buscar/filtrar a lista de estoque
   por nome.
-- **RF-09:** O formulário de peça permite editar o preço de venda
-  diretamente, ou editar a margem de lucro (%) — nesse caso o preço de
-  venda é recalculado a partir do preço de compra.
-- **RF-10:** Uma peça com quantidade disponível igual ou menor que o
-  seu estoque mínimo cadastrado exibe um aviso visual de estoque baixo
-  na lista.
+- **RF-09 (revisão 2026-09-13):** O formulário de peça permite editar
+  o preço de venda diretamente, ou editar a Margem de Markup (%) —
+  nesse caso o preço de venda (e a Margem de Venda derivada) são
+  recalculados a partir do preço de compra.
+- ~~**RF-10:** Uma peça com quantidade disponível igual ou menor que o
+  seu estoque mínimo cadastrado exibe um aviso visual de estoque
+  baixo na lista.~~ **Removido (revisão 2026-09-13)** — o campo
+  "Estoque Mínimo" e o aviso de estoque baixo saem do sistema por
+  completo (formulário, tabela e API/banco — ver
+  `specs/specs/estoque/` do `connectasys_api`).
 - **RF-04:** A tela de Estoque deve ter uma entrada própria no menu de
   navegação lateral do app.
 - **RF-05:** No formulário de adicionar item de uma Ordem de Serviço,
@@ -137,8 +142,8 @@ quantidade disponível é debitada.
 
 ## 5. Fora de Escopo
 
-- Notificação ativa (e-mail, push) de estoque baixo — só o aviso
-  visual na tela (RF-10).
+- Estoque mínimo e qualquer aviso (visual ou notificação) de estoque
+  baixo — removido por completo (revisão 2026-09-13).
 - Editar a quantidade/vínculo de um item de OS já adicionado — hoje só
   existe criar e remover item, não editar (mesmo limite já existente
   antes desta feature).
@@ -162,6 +167,18 @@ quantidade disponível é debitada.
   especial em itens de OS antigos que a referenciam — comportamento
   do backend (mantém o `EstoqueId` mesmo que aponte pra um registro
   que não existe mais).
+- **Revisão 2026-09-13 — duas margens:** o pedido do usuário foi
+  "acrescentar Margem de Venda e Margem de Markup" ao campo Margem.
+  Este documento assume as duas fórmulas de mercado mais comuns
+  (nenhuma delas é gravada no banco — ambas continuam calculadas na
+  hora, mesma decisão já registrada pra `Margem` antes desta revisão):
+  - **Margem de Markup** = `(PrecoVenda − PrecoCompra) / PrecoCompra × 100`
+    (é a fórmula que já existia sob o nome "margem de lucro").
+  - **Margem de Venda** = `(PrecoVenda − PrecoCompra) / PrecoVenda × 100`
+    (lucro como percentual do preço de venda, não do custo — sempre
+    menor que a de Markup pro mesmo par de preços).
+  Se a intenção do usuário era outra definição pra qualquer uma das
+  duas, avisar pra eu ajustar a fórmula.
 
 ## Checklist de Qualidade da Spec
 
