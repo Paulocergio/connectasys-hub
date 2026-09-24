@@ -2,7 +2,7 @@
 
 # ⚙️ ConnectaSys Hub
 
-**O painel do ConnectaSys** — landing page, login e o sistema completo de gestão de oficinas mecânicas, consumindo a [ConnectaSys API](https://github.com/Paulocergio/connectasys_api).
+**Projeto de estudo de Spec-Driven Development (SDD)** — o frontend fictício de um sistema de gestão para oficinas mecânicas, usado como laboratório para praticar o desenvolvimento guiado por especificações. Consome a [ConnectaSys API](https://github.com/Paulocergio/connectasys_api), que também é um projeto de estudo.
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
@@ -11,20 +11,32 @@
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![Cloudflare](https://img.shields.io/badge/Cloudflare%20Workers-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)
 
+![Propósito](https://img.shields.io/badge/propósito-aprendizado%20de%20SDD-orange?style=flat-square)
+![Metodologia](https://img.shields.io/badge/metodologia-Spec--Driven%20Development-blueviolet?style=flat-square)
 ![UI](https://img.shields.io/badge/UI-shadcn%2Fui%20%2B%20Radix-black?style=flat-square)
 ![Forms](https://img.shields.io/badge/validação-Zod-3E67B1?style=flat-square)
 ![Tema](https://img.shields.io/badge/tema-dark%20%2F%20light-8B5CF6?style=flat-square)
-![Processo](https://img.shields.io/badge/processo-SDD-0A7E8C?style=flat-square)
-![Status](https://img.shields.io/badge/status-em%20produção-success?style=flat-square)
+![Status](https://img.shields.io/badge/status-projeto%20de%20estudo-yellow?style=flat-square)
 
-🌐 **[connectasys.com.br](https://connectasys.com.br)**
+🌐 **[connectasys.com.br](https://connectasys.com.br)** — demonstração do projeto de estudo
 
 </div>
 
 ---
 
+> [!IMPORTANT]
+> **Este é um projeto exclusivamente educacional.**
+>
+> O ConnectaSys **não é um produto comercial**, não é vendido, não atende oficinas reais e **não deve ser usado com dados reais**. Ele existe apenas como exercício prático para aprender a **usar Spec-Driven Development (SDD)**: escrever a especificação primeiro e só depois implementar o código a partir dela.
+>
+> A landing page, os "planos", os depoimentos e as oficinas citadas fazem parte do cenário de prática e são **fictícios**. A versão publicada em `connectasys.com.br` é apenas uma **demonstração** do resultado do estudo.
+
+---
+
 ## 📑 Sumário
 
+- [Por que este projeto existe](#-por-que-este-projeto-existe)
+- [Como o SDD é aplicado aqui](#-como-o-sdd-é-aplicado-aqui)
 - [Visão geral](#-visão-geral)
 - [Telas implementadas](#-telas-implementadas)
 - [Stack](#-stack)
@@ -33,23 +45,66 @@
 - [Integração com a API](#-integração-com-a-api)
 - [Design system](#-design-system)
 - [Como rodar](#-como-rodar)
-- [Deploy](#-deploy)
-- [Specs](#-specs-spec-driven-development)
-- [Roadmap](#-roadmap)
+- [Deploy da demonstração](#-deploy-da-demonstração)
+- [Roadmap de estudo](#-roadmap-de-estudo)
+- [Aviso e licença](#-aviso-e-licença)
+
+---
+
+## 🎓 Por que este projeto existe
+
+O objetivo **não é entregar um produto**, e sim aprender na prática a trabalhar com **Spec-Driven Development** também no frontend. Cada tela do repositório é, antes de tudo, um exercício de:
+
+- descrever **o quê** a tela precisa fazer e **por quê**, antes de pensar em componentes;
+- transformar requisitos em um **design técnico** explícito (rotas, queries, validações, estados);
+- quebrar o design em **tarefas verificáveis** e implementá-las seguindo a spec;
+- manter a spec e a constituição como **fonte da verdade** — se o código precisa mudar, a spec muda primeiro.
+
+O código em si é o subproduto. O aprendizado está no processo.
+
+---
+
+## 📋 Como o SDD é aplicado aqui
+
+O projeto é regido pela **[constituição](./specs/constitution.md)** (`specs/constitution.md`) — documento **imutável** que fixa stack, idioma, arquitetura, uso de cor e o próprio processo de desenvolvimento. Nenhuma spec, design ou código pode contradizê-la.
+
+Toda feature passa por três fases, cada uma com seu artefato em `specs/<slug>/`, seguidas da implementação:
+
+```
+/especificar <feature>   → specs/<slug>/spec.md      · o quê e por quê
+/planejar <slug>         → specs/<slug>/design.md    · decisões técnicas
+/tarefas <slug>          → specs/<slug>/tasks.md     · checklist verificável
+/implementar <slug>      → código em src/ + tasks.md atualizado
+```
+
+### 🔁 Fluxo de trabalho
+
+```mermaid
+flowchart LR
+    A[constitution.md] --> B[spec.md]
+    B --> C[design.md]
+    C --> D[tasks.md]
+    D --> E[Código]
+    E -.->|mudança de requisito| B
+```
+
+**Features especificadas e implementadas como exercício:** `landingpage` · `usuarios-api` · `perfis-usuario` · `clientes` · `veiculos` · `ordens-servico` · `impressao-os` · `aprovacao-os-conta-receber` · `estoque` · `contas-a-pagar` · `contas-a-receber` · `forma-pagamento` · `seguranca-quantica`
+
+> 💡 Para estudar o projeto, o caminho recomendado é ler a spec de uma feature **antes** de abrir a rota correspondente e conferir se a implementação respeita o que foi especificado.
 
 ---
 
 ## 🎯 Visão geral
 
-O **ConnectaSys Hub** é o frontend do ConnectaSys: um SaaS multitenant de gestão para oficinas mecânicas. Ele entrega três superfícies em uma única aplicação:
+O **ConnectaSys Hub** simula o frontend de um sistema de gestão para oficinas mecânicas. O cenário foi escolhido por ser concreto e ter telas e regras suficientes para exercitar o fluxo SDD de ponta a ponta. Ele reúne três superfícies em uma única aplicação:
 
 | Superfície | Rota | O que é |
 |:--|:--|:--|
-| 🚀 **Landing page** | `/` | Apresentação do produto, recursos, planos e FAQ — tema escuro fixo |
-| 🔑 **Acesso** | `/auth` | Login contra a API real, com aba de cadastro de oficina |
+| 🚀 **Landing page** | `/` | Página de apresentação fictícia — recursos, planos e FAQ de exemplo — tema escuro fixo |
+| 🔑 **Acesso** | `/auth` | Login contra a API do projeto, com aba de cadastro de oficina |
 | 🧭 **Painel** | `/dashboard` e demais | Área logada com sidebar retrátil, dark/light mode e os módulos operacionais |
 
-Todo o dado exibido vem da **ConnectaSys API** — não há mais mock local nos módulos migrados. A aplicação roda com SSR via TanStack Start e é publicada como um **Cloudflare Worker**.
+Todo o dado exibido vem da **ConnectaSys API** — não há mock local nos módulos migrados. A aplicação roda com SSR via TanStack Start e é publicada como um **Cloudflare Worker**.
 
 ---
 
@@ -57,8 +112,8 @@ Todo o dado exibido vem da **ConnectaSys API** — não há mais mock local nos 
 
 | Módulo | Rota | Recursos |
 |:--|:--|:--|
-| 🚀 **Landing** | `/` | Hero animado, marquee de oficinas, grid de recursos, 3 planos, FAQ em accordion, blobs e preview do produto |
-| 🔑 **Login** | `/auth` | Autenticação real via `POST /api/Auth/login`, mensagens de erro da API, toast de boas-vindas |
+| 🚀 **Landing** | `/` | Hero animado, marquee de oficinas fictícias, grid de recursos, 3 planos de exemplo, FAQ em accordion, blobs e preview do produto |
+| 🔑 **Login** | `/auth` | Autenticação via `POST /api/Auth/login`, mensagens de erro da API, toast de boas-vindas |
 | 📊 **Dashboard** | `/dashboard` | OS abertas e atrasadas, clientes ativos, peças em estoque baixo e faturamento do mês — calculados ao vivo |
 | 👤 **Clientes** | `/clientes` | CRUD + busca, CPF/CNPJ com validação e **autopreenchimento por CNPJ (BrasilAPI) e CEP (ViaCEP)** |
 | 🚗 **Veículos** | `/veiculos` | CRUD + busca, vínculo com cliente, tipo de veículo e **validação de placa (padrão antigo e Mercosul)** |
@@ -68,6 +123,8 @@ Todo o dado exibido vem da **ConnectaSys API** — não há mais mock local nos 
 | 💰 **Contas a Receber** | `/contas-a-receber` | CRUD + busca, vínculo com cliente e OS, baixa com forma de pagamento |
 | 🧑‍🔧 **Usuários** | `/usuarios` | CRUD + busca, seleção de perfil e badge por role |
 | 🎨 **Tema** | (global) | Alternância dark/light na sidebar, **persistida no perfil do usuário** via API |
+
+> Cada tela acima corresponde a uma ou mais specs em `specs/`.
 
 ---
 
@@ -93,6 +150,8 @@ Todo o dado exibido vem da **ConnectaSys API** — não há mais mock local nos 
 ```
 connectasys-hub
 │
+├── specs/                          → Constituição + specs de cada feature (fluxo SDD)
+│
 ├── src/routes/                   → Rotas (file-based routing do TanStack Router)
 │   ├── __root.tsx                  → Providers globais, <head>, 404 e error boundary
 │   ├── index.tsx                   → Landing page (pública, SSR)
@@ -112,8 +171,7 @@ connectasys-hub
 │   ├── tema.ts                     → Hook de tema, com persistência no perfil
 │   └── utils.ts · initials.ts      → Helpers compartilhados
 │
-├── src/styles.css                  → Tokens de cor em oklch (dark + light) e regras de impressão
-└── specs/                          → Constituição + specs de cada feature (fluxo SDD)
+└── src/styles.css                  → Tokens de cor em oklch (dark + light) e regras de impressão
 ```
 
 ### 🔄 Fluxo de dados
@@ -135,6 +193,8 @@ Cada tela segue o mesmo padrão: `useQuery` para listar, `useMutation` para cria
 ---
 
 ## 🔐 Autenticação e sessão
+
+> ⚠️ O fluxo abaixo foi especificado e implementado **como exercício de SDD**. Não passou por auditoria de segurança — não use credenciais ou dados reais.
 
 ```mermaid
 flowchart TD
@@ -196,7 +256,7 @@ Ambas falham de forma silenciosa e amigável: se a consulta não responder, o fo
 
 - **Tokens semânticos** em `src/styles.css` (`bg-primary`, `text-muted-foreground`, `bg-card`, `bg-status-success-bg`…) — cor literal do Tailwind ou hex direto em `className` é proibido pela constituição do projeto.
 - Toda cor é declarada em **`oklch()`**, com paleta completa para **dark** e **light**.
-- Fundo base do produto: `oklch(0.18 0.0185 294.7)` — o roxo-escuro `#121019` que originou a identidade.
+- Fundo base: `oklch(0.18 0.0185 294.7)` — o roxo-escuro `#121019` que originou a identidade visual.
 - **Landing e login ficam sempre no tema escuro**; o tema claro só se aplica dentro da área logada.
 - Badges de status, role e forma de pagamento usam a escala `--status-*`, garantindo contraste nos dois temas.
 - `@media print` prepara a folha da OS: a interface some (`print:hidden`) e só o documento é impresso.
@@ -232,18 +292,20 @@ O Vite imprime a URL local no terminal. Faça login com um usuário cadastrado n
 | Comando | O que faz |
 |:--|:--|
 | `npm run dev` | Servidor de desenvolvimento com HMR |
-| `npm run build` | Build de produção (Nitro → Cloudflare) |
+| `npm run build` | Build (Nitro → Cloudflare) |
 | `npm run preview` | Serve o build localmente |
 | `npm run lint` | ESLint — obrigatório antes de considerar qualquer código pronto |
 | `npm run format` | Prettier em todo o projeto |
 
 ---
 
-## ☁️ Deploy
+## ☁️ Deploy da demonstração
+
+O projeto é publicado apenas para **demonstrar o resultado do estudo** e praticar o ciclo completo até o deploy. Não há clientes, SLA nem dados reais.
 
 ```mermaid
 flowchart TD
-    U[Usuário] --> CF[connectasys.com.br<br/>Cloudflare Worker · SSR]
+    U[Visitante] --> CF[connectasys.com.br<br/>Cloudflare Worker · SSR]
     CF -->|VITE_API_URL| API[api.connectasys.com.br<br/>Azure Container Apps]
     API --> DB[(Azure PostgreSQL<br/>Flexible Server)]
 ```
@@ -258,33 +320,18 @@ npx wrangler deploy --config .output/server/wrangler.json \
 | Ambiente | Variável | Valor |
 |:--|:--|:--|
 | Local | `VITE_API_URL` | `https://localhost:7074` (`.env.example` → `.env.local`) |
-| Produção | `VITE_API_URL` | `https://api.connectasys.com.br` (`.env.production`) |
+| Demonstração | `VITE_API_URL` | `https://api.connectasys.com.br` (`.env.production`) |
 
 📄 Domínios, DNS, certificados, infraestrutura da API e do banco estão documentados em **[`DEPLOYMENT.md`](./DEPLOYMENT.md)**.
 
 ---
 
-## 📋 Specs (spec-driven development)
+## 🗺️ Roadmap de estudo
 
-O projeto é regido pela **[constituição](./specs/constitution.md)** (`specs/constitution.md`) — documento **imutável** que fixa stack, idioma, arquitetura, uso de cor e o próprio processo de desenvolvimento. Nenhuma spec, design ou código pode contradizê-la.
+Cada item abaixo é uma **próxima spec a escrever e implementar** como exercício de SDD.
 
-Toda feature passa por três fases, cada uma com seu artefato em `specs/<slug>/`:
-
-```
-/especificar <feature>   → specs/<slug>/spec.md      · o quê e por quê
-/planejar <slug>         → specs/<slug>/design.md    · decisões técnicas
-/tarefas <slug>          → specs/<slug>/tasks.md     · checklist verificável
-/implementar <slug>      → código em src/ + tasks.md atualizado
-```
-
-**Features especificadas:** `landingpage` · `usuarios-api` · `perfis-usuario` · `clientes` · `veiculos` · `ordens-servico` · `impressao-os` · `aprovacao-os-conta-receber` · `estoque` · `contas-a-pagar` · `contas-a-receber` · `forma-pagamento` · `seguranca-quantica`
-
----
-
-## 🗺️ Roadmap
-
-- [x] 🚀 Landing page com recursos, planos e FAQ
-- [x] 🔑 Login autenticado contra a API real
+- [x] 🚀 Landing page com recursos, planos e FAQ (fictícios)
+- [x] 🔑 Login autenticado contra a API do projeto
 - [x] 🧭 Layout com sidebar retrátil e menu de usuário
 - [x] 🎨 Dark/light mode persistido no perfil
 - [x] 👤 Clientes com busca de CNPJ e CEP
@@ -294,12 +341,12 @@ Toda feature passa por três fases, cada uma com seu artefato em `specs/<slug>/`
 - [x] 💰 Financeiro (contas a pagar e a receber)
 - [x] 🧑‍🔧 Usuários e perfis
 - [x] 📊 Dashboard com indicadores ao vivo
-- [x] ☁️ Deploy em produção com domínio próprio
+- [x] ☁️ Deploy da demonstração com domínio próprio
 - [ ] 🏢 Cadastro self-service de oficina (multitenant)
 - [ ] 📅 Agenda de box com distribuição por mecânico
 - [ ] 📈 Relatórios e gráficos gerenciais
 - [ ] 🔎 Paginação e filtros avançados nas listagens
-- [ ] 🧪 Testes automatizados
+- [ ] 🧪 Testes automatizados derivados dos critérios de aceite das specs
 - [ ] 🔁 CI/CD para os redeploys
 
 ---
@@ -311,14 +358,18 @@ Toda feature passa por três fases, cada uma com seu artefato em `specs/<slug>/`
 | [`connectasys-hub`](https://github.com/Paulocergio/connectasys-hub) | 🖥️ Frontend — este repositório |
 | [`connectasys_api`](https://github.com/Paulocergio/connectasys_api) | ⚙️ Backend — API .NET 10 + PostgreSQL |
 
+Ambos fazem parte do mesmo estudo de Spec-Driven Development.
+
 ---
 
-## 📄 Licença
+## 📄 Aviso e licença
+
+Este repositório é um **projeto pessoal de aprendizado de Spec-Driven Development**. Não é um produto, não é comercializado, não tem suporte, não oferece garantias e não deve ser usado para gerenciar oficinas ou dados reais. Planos, preços, depoimentos, nomes de oficinas e dados de exemplo são fictícios.
 
 Projeto privado — todos os direitos reservados.
 
 <div align="center">
 
-<sub>Feito com ☕ e React para as oficinas que mantêm o Brasil rodando.</sub>
+<sub>Feito com ☕ e React para aprender a especificar antes de codar.</sub>
 
 </div>
